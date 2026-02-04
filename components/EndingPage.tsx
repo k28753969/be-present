@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { MemoRecord } from '../types';
 import { EMOTION_SCORES } from '../constants';
 import HistoryModal from './HistoryModal';
+import AnalysisModal from './AnalysisModal';
 
 interface Props {
   history: MemoRecord[];
@@ -13,6 +14,7 @@ interface Props {
 
 const EndingPage: React.FC<Props> = ({ history, onReset, onExit, lastEmotion }) => {
   const [showHistory, setShowHistory] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   const calculateTotalScore = () => {
     return history.reduce((acc, rec) => acc + (EMOTION_SCORES[rec.emotion] || 0), 0);
@@ -103,17 +105,17 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, lastEmotion }) 
         </button>
         
         <button
-          onClick={onReset}
+          onClick={onExit}
           className="w-full bg-white/10 py-6 rounded-2xl text-lg font-light border border-white/20 hover:bg-white/20 transition-all shadow-lg"
         >
-          새로운 현존 시작하기
+          앱 종료하기
         </button>
 
         <button
-          onClick={onExit}
+          onClick={() => setShowAnalysis(true)}
           className="w-full py-4 text-sm font-light text-white/40 hover:text-white/80 transition-all"
         >
-          앱 종료하기
+          나의 현존의식 분석
         </button>
       </div>
 
@@ -121,6 +123,14 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, lastEmotion }) 
         <HistoryModal 
           history={history} 
           onClose={() => setShowHistory(false)} 
+        />
+      )}
+
+      {showAnalysis && (
+        <AnalysisModal
+          history={history}
+          onClose={() => setShowAnalysis(false)}
+          onReset={onReset}
         />
       )}
     </div>
