@@ -1,0 +1,127 @@
+
+import React, { useState } from 'react';
+import { MemoRecord } from '../types';
+import { EMOTION_SCORES } from '../constants';
+import HistoryModal from './HistoryModal';
+
+interface Props {
+  history: MemoRecord[];
+  onReset: () => void;
+  lastEmotion: string;
+}
+
+const EndingPage: React.FC<Props> = ({ history, onReset, lastEmotion }) => {
+  const [showHistory, setShowHistory] = useState(false);
+
+  const calculateTotalScore = () => {
+    return history.reduce((acc, rec) => acc + (EMOTION_SCORES[rec.emotion] || 0), 0);
+  };
+
+  const getLevelInfo = () => {
+    const count = history.length;
+    
+    // 레벨 데이터 정의 (임계값 기준 내림차순 정렬)
+    const levels = [
+      { threshold: 400, title: "수다원 등극(만랩)", rank: "Level 30" },
+      { threshold: 380, title: "흐름의 동반자", rank: "Level 29" },
+      { threshold: 360, title: "세상에 밝은 빛", rank: "Level 28" },
+      { threshold: 340, title: "초월의 문턱", rank: "Level 27" },
+      { threshold: 320, title: "세계조화의 조정관", rank: "Level 26" },
+      { threshold: 300, title: "흐름중심의 집정관", rank: "Level 25" },
+      { threshold: 280, title: "존재경계의 관리인", rank: "Level 24" },
+      { threshold: 260, title: "자아의식 감별관", rank: "Level 23" },
+      { threshold: 245, title: "현존에 머무는 자", rank: "Level 22" },
+      { threshold: 230, title: "시간과 숨을 맞춘 자", rank: "Level 21" },
+      { threshold: 215, title: "침묵과 걷는 자", rank: "Level 20" },
+      { threshold: 200, title: "진리의 바퀴를 돌린 자", rank: "Level 19" },
+      { threshold: 185, title: "생각 밖으로 나온 자", rank: "Level 18" },
+      { threshold: 170, title: "의식의 등대", rank: "Level 17" },
+      { threshold: 155, title: "현존의 빛을 내는 자", rank: "Level 16" },
+      { threshold: 140, title: "지금에 머무는 자", rank: "Level 15" },
+      { threshold: 125, title: "동일시를 끊은 자", rank: "Level 14" },
+      { threshold: 110, title: "빛의 응시자", rank: "Level 13" },
+      { threshold: 95, title: "흐름과 하나됨", rank: "Level 12" },
+      { threshold: 80, title: "분리의 꿈을 깬 자", rank: "Level 11" },
+      { threshold: 70, title: "현존의식 관리자", rank: "Level 10" },
+      { threshold: 60, title: "존재에 닻 내린 자", rank: "Level 9" },
+      { threshold: 50, title: "고요의 문턱", rank: "Level 8" },
+      { threshold: 40, title: "실재의 대면자", rank: "Level 7" },
+      { threshold: 30, title: "2급 내면 감시관", rank: "Level 6" },
+      { threshold: 25, title: "감정의 파도 관찰자", rank: "Level 5" },
+      { threshold: 20, title: "내면을 보는 눈", rank: "Level 4" },
+      { threshold: 15, title: "자각 수행자", rank: "Level 3" },
+      { threshold: 10, title: "생각을 알아차린 자", rank: "Level 2" },
+      { threshold: 5, title: "현존 입문자", rank: "Level 1" },
+      { threshold: 0, title: "관찰의 시작", rank: "Level 0" }
+    ];
+
+    return levels.find(l => count >= l.threshold) || levels[levels.length - 1];
+  };
+
+  const currentScore = calculateTotalScore();
+  const level = getLevelInfo();
+
+  return (
+    <div className="fade-in space-y-10 text-center">
+      <div className="space-y-6">
+        <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto border border-blue-400/30 animate-pulse">
+          <svg className="w-10 h-10 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-3xl font-light text-white">아주 좋습니다</h2>
+          <p className="text-sm font-light text-blue-200/50 max-w-[300px] mx-auto leading-relaxed">
+            지금 당신이 있는 곳은 완벽하게 안전합니다 <br />아무 일도 벌어지지 않았어요<br />이것만이 유일한 진실입니다
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="glass-card p-8 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
+          <p className="text-xs text-blue-300 opacity-60 mb-3 uppercase tracking-[0.2em] font-medium">나의 의식 점수</p>
+          <p className="text-4xl font-light tracking-tight">{currentScore}</p>
+        </div>
+        <div className="glass-card p-8 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
+          <p className="text-xs text-blue-300 opacity-60 mb-3 uppercase tracking-[0.2em] font-medium">현재 레벨</p>
+          <div className="text-center space-y-1">
+            <p className="text-xl font-light leading-tight text-white">{level.title}</p>
+            <p className="text-sm text-blue-400/70 font-medium tracking-wide">{level.rank}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <button
+          onClick={() => setShowHistory(true)}
+          className="w-full glass-card py-6 rounded-2xl text-lg font-light border border-white/10 hover:bg-white/10 transition-all"
+        >
+          지금까지 기록한 메모보기
+        </button>
+        
+        <button
+          onClick={onReset}
+          className="w-full bg-white/10 py-6 rounded-2xl text-lg font-light border border-white/20 hover:bg-white/20 transition-all shadow-lg"
+        >
+          새로운 현존 시작하기
+        </button>
+
+        <button
+          onClick={() => window.close()}
+          className="w-full py-4 text-sm font-light text-white/40 hover:text-white/80 transition-all"
+        >
+          앱 종료하기
+        </button>
+      </div>
+
+      {showHistory && (
+        <HistoryModal 
+          history={history} 
+          onClose={() => setShowHistory(false)} 
+        />
+      )}
+    </div>
+  );
+};
+
+export default EndingPage;
