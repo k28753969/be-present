@@ -5,17 +5,22 @@ import { MemoRecord } from '../types';
 interface Props {
   history: MemoRecord[];
   onClose: () => void;
+  onDeleteRecord: (id: string) => void;
 }
 
-const HistoryModal: React.FC<Props> = ({ history, onClose }) => {
+const HistoryModal: React.FC<Props> = ({ history, onClose, onDeleteRecord }) => {
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
 
   const handleRecordClick = (id: string) => {
     if (removedIds.has(id)) return;
+    
+    // 시각적 삭제 상태 추가 (애니메이션 시작)
     setRemovedIds(prev => new Set(prev).add(id));
     
-    // 시각적으로 사라지는 애니메이션(1초) 후 실제 데이터 처리가 필요하다면 
-    // 여기서 setTimeout을 사용해 부모 상태를 업데이트할 수 있습니다.
+    // 애니메이션이 어느 정도 진행된 후(약 800ms) 실제 원본 데이터 영구 삭제
+    setTimeout(() => {
+      onDeleteRecord(id);
+    }, 800);
   };
 
   return (

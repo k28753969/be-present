@@ -1,27 +1,20 @@
 
 import React from 'react';
-import { MemoRecord } from '../types';
 import { EMOTION_SCORES } from '../constants';
 
 interface Props {
-  history: MemoRecord[];
+  emotionStats: Record<string, number>;
   onClose: () => void;
   onReset: () => void;
 }
 
-const AnalysisModal: React.FC<Props> = ({ history, onClose, onReset }) => {
-  // 감정별 빈도 계산
-  const emotionCounts = history.reduce((acc, rec) => {
-    acc[rec.emotion] = (acc[rec.emotion] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
+const AnalysisModal: React.FC<Props> = ({ emotionStats, onClose, onReset }) => {
   // 점수가 높은 순(또는 EMOTION_SCORES 순서)으로 정렬하여 표시
   const allEmotions = Object.keys(EMOTION_SCORES);
   const data = allEmotions
     .map(emotion => ({
       name: emotion,
-      count: emotionCounts[emotion] || 0,
+      count: emotionStats[emotion] || 0,
       score: EMOTION_SCORES[emotion]
     }))
     .filter(item => item.count > 0)
@@ -85,8 +78,8 @@ const AnalysisModal: React.FC<Props> = ({ history, onClose, onReset }) => {
               <div className="glass-card p-6 rounded-3xl border-white/5 bg-white/[0.01]">
                 <h3 className="text-xs text-blue-300/40 uppercase tracking-widest mb-4 font-medium">주요 패턴 요약</h3>
                 <p className="text-sm font-light leading-relaxed text-white/60">
-                  당신은 가장 자주 <span className="text-blue-200 font-normal">[{data[0].name}]</span>의 상태를 알아차리고 있습니다. 
-                  모든 알아차림은 그 자체로 현존의 승리입니다. 어떤 감정도 틀리지 않았으며, 관찰하는 순간 당신은 이미 그 너머에 있습니다.
+                  당신은 지금까지 가장 자주 <span className="text-blue-200 font-normal">[{data[0].name}]</span>의 상태를 알아차렸습니다. 
+                  메모를 비워내더라도 그 알아차림의 가치는 당신의 의식 데이터에 고스란히 남아있습니다.
                 </p>
               </div>
             </div>

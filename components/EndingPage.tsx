@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { MemoRecord } from '../types';
-import { EMOTION_SCORES } from '../constants';
 import HistoryModal from './HistoryModal';
 import AnalysisModal from './AnalysisModal';
 
@@ -9,19 +8,19 @@ interface Props {
   history: MemoRecord[];
   onReset: () => void;
   onExit: () => void;
+  onDeleteRecord: (id: string) => void;
+  totalScore: number;
+  totalCount: number;
+  emotionStats: Record<string, number>;
   lastEmotion: string;
 }
 
-const EndingPage: React.FC<Props> = ({ history, onReset, onExit, lastEmotion }) => {
+const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord, totalScore, totalCount, emotionStats, lastEmotion }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
-  const calculateTotalScore = () => {
-    return history.reduce((acc, rec) => acc + (EMOTION_SCORES[rec.emotion] || 0), 0);
-  };
-
   const getLevelInfo = () => {
-    const count = history.length;
+    const count = totalCount;
     
     const levels = [
       { threshold: 400, title: "수다원 등극(만랩)", rank: "Level 30" },
@@ -60,7 +59,6 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, lastEmotion }) 
     return levels.find(l => count >= l.threshold) || levels[levels.length - 1];
   };
 
-  const currentScore = calculateTotalScore();
   const level = getLevelInfo();
 
   return (
@@ -83,7 +81,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, lastEmotion }) 
         <div className="glass-card p-8 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
           <p className="text-xs text-blue-300 opacity-60 mb-3 uppercase tracking-[0.2em] font-medium">나의 의식 점수</p>
           <p className="text-4xl font-light tracking-tight">
-            {currentScore.toLocaleString()}
+            {totalScore.toLocaleString()}
             <span className="text-xl ml-0.5 opacity-60 font-normal">점</span>
           </p>
         </div>
@@ -123,12 +121,13 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, lastEmotion }) 
         <HistoryModal 
           history={history} 
           onClose={() => setShowHistory(false)} 
+          onDeleteRecord={onDeleteRecord}
         />
       )}
 
       {showAnalysis && (
         <AnalysisModal
-          history={history}
+          emotionStats={emotionStats}
           onClose={() => setShowAnalysis(false)}
           onReset={onReset}
         />

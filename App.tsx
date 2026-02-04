@@ -4,6 +4,7 @@ import { Step, MemoRecord } from './types';
 import MemoPage from './components/MemoPage';
 import QuestionPage from './components/QuestionPage';
 import EndingPage from './components/EndingPage';
+import { EMOTION_SCORES } from './constants';
 
 const REENTRY_LIMIT_MS = 5 * 60 * 1000; // 5분
 
@@ -11,6 +12,10 @@ const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>(Step.MEMO);
   const [currentMemo, setCurrentMemo] = useState<string>('');
   const [history, setHistory] = useState<MemoRecord[]>([]);
+  const [accumulatedScore, setAccumulatedScore] = useState<number>(0);
+  const [accumulatedCount, setAccumulatedCount] = useState<number>(0);
+  const [emotionStats, setEmotionStats] = useState<Record<string, number>>({});
+  
   const [isExited, setIsExited] = useState(false);
   const [isRestricted, setIsRestricted] = useState(false);
   const [countdown, setCountdown] = useState(3);
@@ -19,7 +24,7 @@ const App: React.FC = () => {
     emotion?: string;
   }>({});
 
-  // 초기 로드 시 5분 제한 체크
+  // 초기 로드 시 데이터 복원 및 제한 체크
   useEffect(() => {
     const lastExit = localStorage.getItem('presence_last_exit');
     if (lastExit) {
@@ -30,12 +35,27 @@ const App: React.FC = () => {
       }
     }
 
-    const saved = localStorage.getItem('presence_history');
-    if (saved) {
+    const savedHistory = localStorage.getItem('presence_history');
+    if (savedHistory) {
       try {
-        setHistory(JSON.parse(saved));
+        setHistory(JSON.parse(savedHistory));
       } catch (e) {
         console.error("Failed to load history", e);
+      }
+    }
+
+    const savedScore = localStorage.getItem('presence_acc_score');
+    if (savedScore) setAccumulatedScore(parseInt(savedScore, 10));
+
+    const savedCount = localStorage.getItem('presence_acc_count');
+    if (savedCount) setAccumulatedCount(parseInt(savedCount, 10));
+
+    const savedStats = localStorage.getItem('presence_emotion_stats');
+    if (savedStats) {
+      try {
+        setEmotionStats(JSON.parse(savedStats));
+      } catch (e) {
+        console.error("Failed to load stats", e);
       }
     }
   }, []);
@@ -49,7 +69,6 @@ const App: React.FC = () => {
       }, 1000);
     } else if (isRestricted && countdown === 0) {
       window.close();
-      // 창이 안 닫힐 경우를 대비해 종료 상태로 변경
       setIsExited(true);
     }
     return () => clearInterval(timer);
@@ -69,8 +88,31 @@ const App: React.FC = () => {
       thoughtType,
       emotion
     };
+
+    // 1. 메모 리스트 업데이트 (LocalStorage 저장)
     const updatedHistory = [newRecord, ...history];
     setHistory(updatedHistory);
+    localStorage.setItem('presence_history', JSON.stringify(updatedHistory));
+
+    // 2. 누적 데이터 및 통계 업데이트 (삭제해도 유지될 데이터)
+    const points = EMOTION_SCORES[emotion] || 0;
+    const newScore = accumulatedScore + points;
+    const newCount = accumulatedCount + 1;
+    const newStats = { ...emotionStats, [emotion]: (emotionStats[emotion] || 0) + 1 };
+    
+    setAccumulatedScore(newScore);
+    setAccumulatedCount(newCount);
+    setEmotionStats(newStats);
+    
+    localStorage.setItem('presence_acc_score', newScore.toString());
+    localStorage.setItem('presence_acc_count', newCount.toString());
+    localStorage.setItem('presence_emotion_stats', JSON.stringify(newStats));
+  };
+
+  const deleteFromHistory = (id: string) => {
+    const updatedHistory = history.filter(item => item.id !== id);
+    setHistory(updatedHistory);
+    // LocalStorage에 즉시 반영하여 새로고침 후에도 유지되도록 함
     localStorage.setItem('presence_history', JSON.stringify(updatedHistory));
   };
 
@@ -92,16 +134,13 @@ const App: React.FC = () => {
   };
 
   const handleExit = () => {
-    // 종료 시간 저장
     localStorage.setItem('presence_last_exit', Date.now().toString());
     setIsExited(true);
-    // 지속 시간을 3배 늘림 (1500ms -> 4500ms)
     setTimeout(() => {
       window.close();
     }, 4500);
   };
 
-  // 5분 제한 화면
   if (isRestricted) {
     return (
       <div className="animated-bg min-h-screen w-full flex flex-col items-center justify-center p-6 text-white text-center">
@@ -131,7 +170,7 @@ const App: React.FC = () => {
         <div className="space-y-6">
           <div className="w-1 h-20 bg-gradient-to-b from-blue-500/0 via-blue-500/50 to-blue-500/0 mx-auto animate-pulse"></div>
           <p className="text-xl font-light text-blue-100/40 tracking-widest leading-relaxed">
-            현존의 빛이 당신의 일상에 <br />늘 함께하기를 기원합니다.
+            현존의 빛이 <br />당신의 일상에 늘 함께하기를.
           </p>
         </div>
       </div>
@@ -153,6 +192,10 @@ const App: React.FC = () => {
               history={history} 
               onReset={handleReset} 
               onExit={handleExit}
+              onDeleteRecord={deleteFromHistory}
+              totalScore={accumulatedScore}
+              totalCount={accumulatedCount}
+              emotionStats={emotionStats}
               lastEmotion={sessionData.emotion || '알 수 없음'}
             />
           )}
