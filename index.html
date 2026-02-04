@@ -3,29 +3,58 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>현존하세요</title>
+    
+    <!-- 모바일 웹앱 설정: 독립 앱처럼 실행 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="현존하세요">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#020617">
+    
+    <!-- PWA Manifest & Icon -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik05IDIxdjFhMSAxIDAgMCAxLTEgMUg3YTEgMSAwIDAgMS0xLTF2LTFhMiAyIDAgMCAwLTItMkgzYTEgMSAwIDAgMS0xLTF2LTJhMiAyIDAgMCAwLTItMmgtMS0yLTJNMTAsM2g0YTYsNiAwIDAgMSw2LDZ2NWE2LDYgMCAwIDEsLTYsNmgtNGE2LDYgMCAwIDEsLTYtNnYtNWE2LDYgMCAwIDEsNi02eiIvPjxnIHN0cm9rZS13aWR0aD0iMC44Ij48bGluZSB4MT0iMTIiIHkxPSIxMCIgeDI9IjEyIiB5Mj0iNyIgc3Ryb2tlPSJ3aGl0ZSIvPjxsaW5lIHgxPSIxMiIgeTE9IjE0IiB4Mj0iMTIiIHkyPSIxNyIgc3Ryb2tlPSJ3aGl0ZSIvPjxsaW5lIHgxPSIxMCIgeTE9IjEyIiB4Mj0iNyIgeTI9IjEyIiBzdHJva2U9IndoaXRlIi8+PGxpbmUgeDE9IjE0IiB5MT0iMTIiIHgyPSIxNyIgeTI9IjEyIiBzdHJva2U9IndoaXRlIi8+PGxpbmUgeDE9IjEwLjU4IiB5MT0iMTAuNTgiIHgyPSI4LjQ2IiB5Mj0iOC40NiIgc3Ryb2tlPSJ3aGl0ZSIvPjxsaW5lIHgxPSIxMy40MiIgeTE9IjEzLjQyIiB4Mj0iMTUuNTQiIHkyPSIxNS41NCIgc3Ryb2tlPSJ3aGl0ZSIvPjxsaW5lIHgxPSIxMC41OCIgeTE9IjEzLjQyIiB4Mj0iOC40NiIgeTI9IjE1LjU0IiBzdHJva2U9IndoaXRlIi8+PGxpbmUgeDE9IjEzLjQyIiB5MT0iMTAuNTgiIHgyPSIxNS41NCIgeTI9IjguNDYiIHN0cm9rZT0id2hpdGUiLz48L2c+PC9zdmc+">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --sat: env(safe-area-inset-top);
+            --sar: env(safe-area-inset-right);
+            --sab: env(safe-area-inset-bottom);
+            --sal: env(safe-area-inset-left);
+        }
+        
         body {
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
             margin: 0;
             padding: 0;
             overflow: hidden;
+            overscroll-behavior: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            background: #020617;
         }
+
         @keyframes gradientMove {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        
         .animated-bg {
-            /* 더욱 다채로운 톤의 그라데이션 조합 */
             background: linear-gradient(-45deg, #020617, #1e1b4b, #312e81, #4c1d95, #701a75, #1e293b, #020617);
             background-size: 400% 400%;
-            /* 배경 애니메이션 속도 대폭 상향 (20s -> 8s) */
             animation: gradientMove 8s ease-in-out infinite;
+            padding-top: var(--sat);
+            padding-bottom: var(--sab);
+            padding-left: var(--sal);
+            padding-right: var(--sar);
         }
+
         .glass-card {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(25px);
@@ -33,7 +62,6 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         
-        /* 질문 등장 애니메이션: 기존보다 1.5배 빠르게 조정 (1.5s -> 1.0s) */
         @keyframes slideUpFadeSlow {
             from { 
                 opacity: 0; 
@@ -51,7 +79,6 @@
             animation: slideUpFadeSlow 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
-        /* 기록 소멸 애니메이션: 구름처럼 흩어짐 */
         @keyframes vanish {
             0% { opacity: 1; transform: scale(1); filter: blur(0); }
             100% { 
@@ -71,6 +98,11 @@
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
+        }
+
+        textarea, input {
+            user-select: text !important;
+            -webkit-user-select: text !important;
         }
     </style>
 <script type="importmap">

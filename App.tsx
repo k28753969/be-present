@@ -5,16 +5,31 @@ import MemoPage from './components/MemoPage';
 import QuestionPage from './components/QuestionPage';
 import EndingPage from './components/EndingPage';
 
+const REENTRY_LIMIT_MS = 5 * 60 * 1000; // 5분
+
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>(Step.MEMO);
   const [currentMemo, setCurrentMemo] = useState<string>('');
   const [history, setHistory] = useState<MemoRecord[]>([]);
+  const [isExited, setIsExited] = useState(false);
+  const [isRestricted, setIsRestricted] = useState(false);
+  const [countdown, setCountdown] = useState(3);
   const [sessionData, setSessionData] = useState<{
     thoughtType?: string;
     emotion?: string;
   }>({});
 
+  // 초기 로드 시 5분 제한 체크
   useEffect(() => {
+    const lastExit = localStorage.getItem('presence_last_exit');
+    if (lastExit) {
+      const lastExitTime = parseInt(lastExit, 10);
+      const now = Date.now();
+      if (now - lastExitTime < REENTRY_LIMIT_MS) {
+        setIsRestricted(true);
+      }
+    }
+
     const saved = localStorage.getItem('presence_history');
     if (saved) {
       try {
@@ -24,6 +39,21 @@ const App: React.FC = () => {
       }
     }
   }, []);
+
+  // 제한 화면에서의 카운트다운 로직
+  useEffect(() => {
+    let timer: number;
+    if (isRestricted && countdown > 0) {
+      timer = window.setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (isRestricted && countdown === 0) {
+      window.close();
+      // 창이 안 닫힐 경우를 대비해 종료 상태로 변경
+      setIsExited(true);
+    }
+    return () => clearInterval(timer);
+  }, [isRestricted, countdown]);
 
   const saveToHistory = (memo: string, thoughtType: string, emotion: string) => {
     const newRecord: MemoRecord = {
@@ -61,10 +91,55 @@ const App: React.FC = () => {
     setSessionData({});
   };
 
+  const handleExit = () => {
+    // 종료 시간 저장
+    localStorage.setItem('presence_last_exit', Date.now().toString());
+    setIsExited(true);
+    setTimeout(() => {
+      window.close();
+    }, 1500);
+  };
+
+  // 5분 제한 화면
+  if (isRestricted) {
+    return (
+      <div className="animated-bg min-h-screen w-full flex flex-col items-center justify-center p-6 text-white text-center">
+        <div className="glass-card p-12 rounded-[3rem] space-y-8 max-w-sm border-white/20 shadow-2xl fade-in">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20">
+            <svg className="w-8 h-8 text-red-400/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="space-y-4">
+            <p className="text-xl font-light leading-relaxed text-blue-100">
+              반복 사용을 금지하기 위해<br />
+              <span className="text-white font-normal">5분이 지난 후</span> 실행이 됩니다.
+            </p>
+            <p className="text-sm text-white/30 font-light">
+              잠시 후 자동으로 앱이 종료됩니다... ({countdown})
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isExited) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-center p-6 z-[100] fade-in">
+        <div className="space-y-6">
+          <div className="w-1 h-20 bg-gradient-to-b from-blue-500/0 via-blue-500/50 to-blue-500/0 mx-auto animate-pulse"></div>
+          <p className="text-xl font-light text-blue-100/40 tracking-widest leading-relaxed">
+            현존의 빛이 <br />당신의 일상에 늘 함께하기를.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="animated-bg min-h-screen w-full flex flex-col items-center justify-center p-6 text-white overflow-hidden relative">
       <div className="max-w-md w-full z-10 py-12">
-        {/* Step-based conditional rendering with fade-in effect */}
         <div key={currentStep} className="fade-in">
           {currentStep === Step.MEMO && (
             <MemoPage onComplete={handleMemoComplete} />
@@ -76,13 +151,13 @@ const App: React.FC = () => {
             <EndingPage 
               history={history} 
               onReset={handleReset} 
+              onExit={handleExit}
               lastEmotion={sessionData.emotion || '알 수 없음'}
             />
           )}
         </div>
       </div>
 
-      {/* Background Decorative Accents */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[10%] left-[10%] w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]"></div>
         <div className="absolute bottom-[10%] right-[10%] w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]"></div>

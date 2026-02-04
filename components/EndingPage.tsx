@@ -7,10 +7,11 @@ import HistoryModal from './HistoryModal';
 interface Props {
   history: MemoRecord[];
   onReset: () => void;
+  onExit: () => void;
   lastEmotion: string;
 }
 
-const EndingPage: React.FC<Props> = ({ history, onReset, lastEmotion }) => {
+const EndingPage: React.FC<Props> = ({ history, onReset, onExit, lastEmotion }) => {
   const [showHistory, setShowHistory] = useState(false);
 
   const calculateTotalScore = () => {
@@ -20,7 +21,6 @@ const EndingPage: React.FC<Props> = ({ history, onReset, lastEmotion }) => {
   const getLevelInfo = () => {
     const count = history.length;
     
-    // 레벨 데이터 정의 (임계값 기준 내림차순 정렬)
     const levels = [
       { threshold: 400, title: "수다원 등극(만랩)", rank: "Level 30" },
       { threshold: 380, title: "흐름의 동반자", rank: "Level 29" },
@@ -80,7 +80,10 @@ const EndingPage: React.FC<Props> = ({ history, onReset, lastEmotion }) => {
       <div className="grid grid-cols-2 gap-4">
         <div className="glass-card p-8 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
           <p className="text-xs text-blue-300 opacity-60 mb-3 uppercase tracking-[0.2em] font-medium">나의 의식 점수</p>
-          <p className="text-4xl font-light tracking-tight">{currentScore}</p>
+          <p className="text-4xl font-light tracking-tight">
+            {currentScore.toLocaleString()}
+            <span className="text-xl ml-0.5 opacity-60 font-normal">점</span>
+          </p>
         </div>
         <div className="glass-card p-8 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
           <p className="text-xs text-blue-300 opacity-60 mb-3 uppercase tracking-[0.2em] font-medium">현재 레벨</p>
@@ -107,7 +110,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, lastEmotion }) => {
         </button>
 
         <button
-          onClick={() => window.close()}
+          onClick={onExit}
           className="w-full py-4 text-sm font-light text-white/40 hover:text-white/80 transition-all"
         >
           앱 종료하기
