@@ -95,9 +95,10 @@ const App: React.FC = () => {
     // 종료 시간 저장
     localStorage.setItem('presence_last_exit', Date.now().toString());
     setIsExited(true);
+    // 지속 시간을 3배 늘림 (1500ms -> 4500ms)
     setTimeout(() => {
       window.close();
-    }, 1500);
+    }, 4500);
   };
 
   // 5분 제한 화면
@@ -130,7 +131,7 @@ const App: React.FC = () => {
         <div className="space-y-6">
           <div className="w-1 h-20 bg-gradient-to-b from-blue-500/0 via-blue-500/50 to-blue-500/0 mx-auto animate-pulse"></div>
           <p className="text-xl font-light text-blue-100/40 tracking-widest leading-relaxed">
-            현존의 빛이 <br />당신의 일상에 늘 함께하기를.
+            현존의 빛이 당신의 일상에 <br />늘 함께하기를 기원합니다.
           </p>
         </div>
       </div>
