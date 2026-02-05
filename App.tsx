@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [sessionData, setSessionData] = useState<{
     thoughtType?: string;
     emotion?: string;
+    weight?: number;
   }>({});
 
   // 초기 로드 시 데이터 복원 및 제한 체크
@@ -74,7 +75,7 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, [isRestricted, countdown]);
 
-  const saveToHistory = (memo: string, thoughtType: string, emotion: string) => {
+  const saveToHistory = (memo: string, thoughtType: string, emotion: string, weight: number = 1.0) => {
     const newRecord: MemoRecord = {
       id: crypto.randomUUID(),
       timestamp: new Date().toLocaleString('ko-KR', {
@@ -95,7 +96,9 @@ const App: React.FC = () => {
     localStorage.setItem('presence_history', JSON.stringify(updatedHistory));
 
     // 2. 누적 데이터 및 통계 업데이트 (삭제해도 유지될 데이터)
-    const points = EMOTION_SCORES[emotion] || 0;
+    // 가중치를 적용한 점수 계산 (반올림 처리)
+    const basePoints = EMOTION_SCORES[emotion] || 0;
+    const points = Math.round(basePoints * weight);
     const newScore = accumulatedScore + points;
     const newCount = accumulatedCount + 1;
     const newStats = { ...emotionStats, [emotion]: (emotionStats[emotion] || 0) + 1 };
@@ -109,11 +112,14 @@ const App: React.FC = () => {
     localStorage.setItem('presence_emotion_stats', JSON.stringify(newStats));
   };
 
+  // 기록 리스트에서만 삭제 (누적 점수 및 분석 통계에는 영향 없음)
   const deleteFromHistory = (id: string) => {
-    const updatedHistory = history.filter(item => item.id !== id);
-    setHistory(updatedHistory);
-    // LocalStorage에 즉시 반영하여 새로고침 후에도 유지되도록 함
-    localStorage.setItem('presence_history', JSON.stringify(updatedHistory));
+    setHistory(prevHistory => {
+      const updated = prevHistory.filter(item => item.id !== id);
+      // LocalStorage에 즉시 반영하여 새로고침 후에도 유지되도록 함
+      localStorage.setItem('presence_history', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handleMemoComplete = (text: string) => {
@@ -121,9 +127,9 @@ const App: React.FC = () => {
     setCurrentStep(Step.QUESTIONS);
   };
 
-  const handleQuestionsComplete = (thoughtType: string, emotion: string) => {
-    setSessionData({ thoughtType, emotion });
-    saveToHistory(currentMemo, thoughtType, emotion);
+  const handleQuestionsComplete = (thoughtType: string, emotion: string, weight: number) => {
+    setSessionData({ thoughtType, emotion, weight });
+    saveToHistory(currentMemo, thoughtType, emotion, weight);
     setCurrentStep(Step.ENDING);
   };
 
@@ -168,8 +174,8 @@ const App: React.FC = () => {
     return (
       <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-center p-6 z-[100] fade-in">
         <div className="space-y-6">
-          <div className="w-1 h-20 bg-gradient-to-b from-blue-500/0 via-blue-500/50 to-blue-500/0 mx-auto animate-pulse"></div>
-          <p className="text-xl font-light text-blue-100/40 tracking-widest leading-relaxed">
+          <div className="w-1 h-20 bg-gradient-to-b from-blue-500/0 via-blue-500/100 to-blue-500/0 mx-auto animate-pulse"></div>
+          <p className="text-xl font-light text-blue-100/80 tracking-widest leading-relaxed">
             현존의 빛이 <br />당신의 일상에 늘 함께하기를.
           </p>
         </div>

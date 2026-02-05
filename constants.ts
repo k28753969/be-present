@@ -3,6 +3,16 @@ import { Question } from './types';
 
 export const QUESTIONS: Question[] = [
   {
+    id: 'Q0',
+    text: '지금 알아차린 그 생각과 감정은?',
+    options: [
+      { label: '몇 분 전에 지나가고 지금은 없다.', value: '0.2', nextAction: 'next' },
+      { label: '방금 전까지 있었고 지금은 없다.', value: '0.5', nextAction: 'next' },
+      { label: '현재 그 생각과 감정 속에 있다.', value: '1.0', nextAction: 'next' },
+      { label: '생각과 감정이 막 시작되려는 순간이다.', value: '1.3', nextAction: 'next' }
+    ]
+  },
+  {
     id: 'Q1',
     text: '지금 하신 그 생각은?',
     options: [

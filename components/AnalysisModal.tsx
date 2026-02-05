@@ -79,7 +79,7 @@ const AnalysisModal: React.FC<Props> = ({ emotionStats, onClose, onReset }) => {
                 <h3 className="text-xs text-blue-300/40 uppercase tracking-widest mb-4 font-medium">주요 패턴 요약</h3>
                 <p className="text-sm font-light leading-relaxed text-white/60">
                   당신은 지금까지 가장 자주 <span className="text-blue-200 font-normal">[{data[0].name}]</span>의 상태를 알아차렸습니다. 
-                  메모를 비워내더라도 그 알아차림의 가치는 당신의 의식 데이터에 고스란히 남아있습니다.
+                  이 알아차림의 경험들은 위의 감정 상태를 점점 무력하게 만들고, 결과적으로 당신의 의식의 밝기를 높여 정신을 강력하게 만듭니다.
                 </p>
               </div>
             </div>
