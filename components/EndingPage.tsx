@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { MemoRecord } from '../types';
-import { getLevelInfo } from '../constants';
 import HistoryModal from './HistoryModal';
 import AnalysisModal from './AnalysisModal';
 import GuideModal from './GuideModal';
@@ -28,12 +27,17 @@ const TypingText: React.FC<TypingTextProps> = ({ text, speed = 40 }) => {
   return (
     <div className="leading-relaxed inline">
       {displayedText.split('').map((char, index) => {
-        if (char === '\n') return <br key={index} />;
+        if (char === '\n') {
+          return <br key={index} />;
+        }
         return (
           <span
             key={index}
             className="inline-block animate-fade-in-soft"
-            style={{ animationFillMode: 'both', whiteSpace: 'pre' }}
+            style={{ 
+              animationFillMode: 'both',
+              whiteSpace: 'pre'
+            }}
           >
             {char}
           </span>
@@ -52,15 +56,57 @@ interface Props {
   totalScore: number;
   totalCount: number;
   emotionStats: Record<string, number>;
+  lastEmotion: string;
 }
 
-const EndingPage: React.FC<Props> = ({ 
-  history, onReset, onExit, onDeleteRecord, totalScore, totalCount, emotionStats 
-}) => {
-  const [activeModal, setActiveModal] = useState<'history' | 'analysis' | 'guide' | null>(null);
+const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord, totalScore, totalCount, emotionStats, lastEmotion }) => {
+  const [showHistory, setShowHistory] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
-  const level = getLevelInfo(totalCount);
-  const message = "지금 여기는 완벽하게 안전합니다.\n아무 일도 벌어지지 않았어요.\n이것만이 유일한 진실입니다.\n잠깐 동안 거짓 망상에 사로잡힌 것임을 깨달으세요.\n 이렇게 깨닫는 단순한 행동만으로도,\n악의 공격으로부터 스스로를 지켜낼 수 있습니다.\n 대군을 거느린 죽음의 신에게 결코 굴복하지 맙시다.";
+  const getLevelInfo = () => {
+    const count = totalCount;
+    
+    const levels = [
+      { threshold: 400, title: "수다원 등극(만랩)", rank: "Level 30" },
+      { threshold: 380, title: "흐름의 동반자", rank: "Level 29" },
+      { threshold: 360, title: "세상에 밝은 빛", rank: "Level 28" },
+      { threshold: 340, title: "초월의 문턱", rank: "Level 27" },
+      { threshold: 320, title: "세계조화의 조정관", rank: "Level 26" },
+      { threshold: 300, title: "흐름중심의 집정관", rank: "Level 25" },
+      { threshold: 280, title: "존재경계의 관리인", rank: "Level 24" },
+      { threshold: 260, title: "자아의식 감별관", rank: "Level 23" },
+      { threshold: 245, title: "현존에 머무는 자", rank: "Level 22" },
+      { threshold: 230, title: "시간과 숨을 맞춘 자", rank: "Level 21" },
+      { threshold: 215, title: "침묵과 걷는 자", rank: "Level 20" },
+      { threshold: 200, title: "진리의 바퀴를 돌린 자", rank: "Level 19" },
+      { threshold: 185, title: "생각 밖으로 나온 자", rank: "Level 18" },
+      { threshold: 170, title: "의식의 등대", rank: "Level 17" },
+      { threshold: 155, title: "현존의 빛을 내는 자", rank: "Level 16" },
+      { threshold: 140, title: "지금에 머무는 자", rank: "Level 15" },
+      { threshold: 125, title: "동일시를 끊은 자", rank: "Level 14" },
+      { threshold: 110, title: "빛의 응시자", rank: "Level 13" },
+      { threshold: 95, title: "흐름과 하나됨", rank: "Level 12" },
+      { threshold: 80, title: "분리의 꿈을 깬 자", rank: "Level 11" },
+      { threshold: 70, title: "현존의식 관리자", rank: "Level 10" },
+      { threshold: 60, title: "존재에 닻 내린 자", rank: "Level 9" },
+      { threshold: 50, title: "고요의 문턱", rank: "Level 8" },
+      { threshold: 40, title: "실재의 대면자", rank: "Level 7" },
+      { threshold: 30, title: "2급 내면 감시관", rank: "Level 6" },
+      { threshold: 25, title: "감정의 파도 관찰자", rank: "Level 5" },
+      { threshold: 20, title: "내면을 보는 눈", rank: "Level 4" },
+      { threshold: 15, title: "자각 수행자", rank: "Level 3" },
+      { threshold: 10, title: "생각을 알아차린 자", rank: "Level 2" },
+      { threshold: 5, title: "현존 입문자", rank: "Level 1" },
+      { threshold: 0, title: "관찰의 시작", rank: "Level 0" }
+    ];
+
+    return levels.find(l => count >= l.threshold) || levels[levels.length - 1];
+  };
+
+  const level = getLevelInfo();
+
+  const message = "지금 여기는 완벽하게 안전합니다.\n아무 일도 벌어지지 않았어요.\n이것만이 유일한 진실입니다.\n잠깐 동안 의미없는 상상에 사로잡힌 것임을 깨달으세요.\n 이렇게 깨닫는 단순한 행동만으로도,\n 스스로를 지켜낼 수 있습니다.";
 
   return (
     <div className="fade-in space-y-11 text-center">
@@ -97,14 +143,14 @@ const EndingPage: React.FC<Props> = ({
 
       <div className="flex flex-col gap-3">
         <button
-          onClick={() => setActiveModal('history')}
+          onClick={() => setShowHistory(true)}
           className="w-full glass-card py-5 rounded-2xl text-base font-light border border-white/10 hover:bg-white/10 transition-all"
         >
           기록한 메모보기
         </button>
 
         <button
-          onClick={() => setActiveModal('guide')}
+          onClick={() => setShowGuide(true)}
           className="w-full glass-card py-5 rounded-2xl text-base font-light border border-white/10 hover:bg-white/10 transition-all text-blue-100/90"
         >
           현존하세요 가이드
@@ -118,22 +164,44 @@ const EndingPage: React.FC<Props> = ({
         </button>
 
         <button
-          onClick={() => setActiveModal('analysis')}
+          onClick={() => setShowAnalysis(true)}
           className="w-full py-3 text-xs font-light text-white/40 hover:text-white/80 transition-all"
         >
           나의 현존의식 분석
         </button>
       </div>
 
-      {activeModal === 'history' && (
-        <HistoryModal history={history} onClose={() => setActiveModal(null)} onDeleteRecord={onDeleteRecord} />
+      {showHistory && (
+        <HistoryModal 
+          history={history} 
+          onClose={() => setShowHistory(false)} 
+          onDeleteRecord={onDeleteRecord}
+        />
       )}
-      {activeModal === 'analysis' && (
-        <AnalysisModal emotionStats={emotionStats} onClose={() => setActiveModal(null)} onReset={onReset} />
+
+      {showAnalysis && (
+        <AnalysisModal
+          emotionStats={emotionStats}
+          onClose={() => setShowAnalysis(false)}
+          onReset={onReset}
+        />
       )}
-      {activeModal === 'guide' && (
-        <GuideModal onClose={() => setActiveModal(null)} />
+
+      {showGuide && (
+        <GuideModal
+          onClose={() => setShowGuide(false)}
+        />
       )}
+
+      <style>{`
+        @keyframes fadeInSoft {
+          from { opacity: 0; transform: translateY(2px); filter: blur(2px); }
+          to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        .animate-fade-in-soft {
+          animation: fadeInSoft 0.8s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
