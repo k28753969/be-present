@@ -25,6 +25,46 @@ const App: React.FC = () => {
     weight?: number;
   }>({});
 
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+  // Service Worker Registration and PWA Install Handling
+  useEffect(() => {
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+
+    // Capture Install Prompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    setDeferredPrompt(null);
+    setShowInstallBtn(false);
+  };
+
   // 초기 로드 시 데이터 복원 및 제한 체크
   useEffect(() => {
     const lastExit = localStorage.getItem('presence_last_exit');
@@ -90,13 +130,10 @@ const App: React.FC = () => {
       emotion
     };
 
-    // 1. 메모 리스트 업데이트 (LocalStorage 저장)
     const updatedHistory = [newRecord, ...history];
     setHistory(updatedHistory);
     localStorage.setItem('presence_history', JSON.stringify(updatedHistory));
 
-    // 2. 누적 데이터 및 통계 업데이트 (삭제해도 유지될 데이터)
-    // 가중치를 적용한 점수 계산 (반올림 처리)
     const basePoints = EMOTION_SCORES[emotion] || 0;
     const points = Math.round(basePoints * weight);
     const newScore = accumulatedScore + points;
@@ -112,11 +149,9 @@ const App: React.FC = () => {
     localStorage.setItem('presence_emotion_stats', JSON.stringify(newStats));
   };
 
-  // 기록 리스트에서만 삭제 (누적 점수 및 분석 통계에는 영향 없음)
   const deleteFromHistory = (id: string) => {
     setHistory(prevHistory => {
       const updated = prevHistory.filter(item => item.id !== id);
-      // LocalStorage에 즉시 반영하여 새로고침 후에도 유지되도록 함
       localStorage.setItem('presence_history', JSON.stringify(updated));
       return updated;
     });
@@ -144,7 +179,7 @@ const App: React.FC = () => {
     setIsExited(true);
     setTimeout(() => {
       window.close();
-    }, 4500);
+    }, 3600);
   };
 
   if (isRestricted) {
@@ -185,6 +220,16 @@ const App: React.FC = () => {
 
   return (
     <div className="animated-bg min-h-screen w-full flex flex-col items-center justify-center p-6 text-white overflow-hidden relative">
+      {/* PWA Install Button Overlay */}
+      {showInstallBtn && (
+        <button
+          onClick={handleInstallClick}
+          className="absolute top-8 right-8 z-50 px-4 py-2 bg-white/10 border border-white/20 backdrop-blur-md rounded-full text-xs font-light tracking-widest text-white/80 hover:bg-white/20 transition-all active:scale-95 shadow-lg"
+        >
+          Install App
+        </button>
+      )}
+
       <div className="max-w-md w-full z-10 py-12">
         <div key={currentStep} className="fade-in">
           {currentStep === Step.MEMO && (
