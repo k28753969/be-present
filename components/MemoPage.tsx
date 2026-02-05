@@ -22,8 +22,8 @@ const MemoPage: React.FC<Props> = ({ onComplete }) => {
           Presence Activated
         </div>
         <h1 className="text-4xl font-light tracking-tight text-white">현존성공</h1>
-        <p className="text-lg font-light text-blue-100/70 leading-relaxed">
-          참 잘하셨어요.<br />
+        <p className="text-sm font-light text-blue-100/70 leading-relaxed">
+          Perfect!! 아주 잘하셨어요.<br />
           당신은 방금 현존의식을 깨우셨습니다.
         </p>
       </div>

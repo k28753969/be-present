@@ -1,8 +1,51 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MemoRecord } from '../types';
 import HistoryModal from './HistoryModal';
 import AnalysisModal from './AnalysisModal';
+
+interface TypingTextProps {
+  text: string;
+  speed?: number;
+}
+
+const TypingText: React.FC<TypingTextProps> = ({ text, speed = 40 }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
+      }, speed);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, text, speed]);
+
+  return (
+    <div className="leading-relaxed inline">
+      {displayedText.split('').map((char, index) => {
+        if (char === '\n') {
+          return <br key={index} />;
+        }
+        return (
+          <span
+            key={index}
+            className="inline-block animate-fade-in-soft"
+            style={{ 
+              animationFillMode: 'both',
+              whiteSpace: 'pre'
+            }}
+          >
+            {char}
+          </span>
+        );
+      })}
+      <span className="inline-block w-[2px] h-[1em] bg-blue-400/50 ml-1 animate-pulse align-middle"></span>
+    </div>
+  );
+};
 
 interface Props {
   history: MemoRecord[];
@@ -61,8 +104,10 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
 
   const level = getLevelInfo();
 
+  const message = "지금 여기는 완벽하게 안전합니다.\n아무 일도 벌어지지 않았어요.\n이것만이 유일한 진실입니다.\n잠깐 동안 거짓 망상에 사로잡힌 것임을 깨달으세요.\n 이렇게 깨닫는 단순한 행동만으로도,\n악의 공격으로부터 스스로를 지켜낼 수 있습니다.\n 대군을 거느린 죽음의 신에게 결코 굴복하지 맙시다.";
+
   return (
-    <div className="fade-in space-y-10 text-center">
+    <div className="fade-in space-y-11 text-center">
       <div className="space-y-6">
         <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto border border-blue-400/30 animate-pulse">
           <svg className="w-10 h-10 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,9 +116,9 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
         </div>
         <div className="space-y-3">
           <h2 className="text-3xl font-light text-white">아주 좋습니다</h2>
-          <p className="text-sm font-light text-blue-200/50 max-w-[300px] mx-auto leading-relaxed">
-            지금 당신이 있는 곳은 완벽하게 안전합니다 <br />아무 일도 벌어지지 않았어요<br />이것만이 유일한 진실입니다
-          </p>
+          <div className="text-sm font-light text-blue-100/70 max-w-[360px] mx-auto min-h-[160px] text-center">
+            <TypingText text={message} />
+          </div>
         </div>
       </div>
 
@@ -132,6 +177,16 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
           onReset={onReset}
         />
       )}
+
+      <style>{`
+        @keyframes fadeInSoft {
+          from { opacity: 0; transform: translateY(2px); filter: blur(2px); }
+          to { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+        .animate-fade-in-soft {
+          animation: fadeInSoft 0.8s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
