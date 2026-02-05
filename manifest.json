@@ -1,7 +1,7 @@
 
 {
   "name": "현존하세요",
-  "short_name": "현존",
+  "short_name": "현존하세요",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#020617",
