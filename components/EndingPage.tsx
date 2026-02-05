@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { MemoRecord } from '../types';
 import HistoryModal from './HistoryModal';
 import AnalysisModal from './AnalysisModal';
+import GuideModal from './GuideModal';
 
 interface TypingTextProps {
   text: string;
@@ -61,6 +62,7 @@ interface Props {
 const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord, totalScore, totalCount, emotionStats, lastEmotion }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const getLevelInfo = () => {
     const count = totalCount;
@@ -109,54 +111,61 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
   return (
     <div className="fade-in space-y-11 text-center">
       <div className="space-y-6">
-        <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto border border-blue-400/30 animate-pulse">
-          <svg className="w-10 h-10 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto border border-blue-400/30 animate-pulse">
+          <svg className="w-8 h-8 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 13l4 4L19 7" />
           </svg>
         </div>
         <div className="space-y-3">
-          <h2 className="text-3xl font-light text-white">아주 좋습니다</h2>
-          <div className="text-sm font-light text-blue-100/70 max-w-[360px] mx-auto min-h-[160px] text-center">
+          <h2 className="text-2xl font-light text-white">아주 좋습니다</h2>
+          <div className="text-[13px] font-light text-blue-100/70 max-w-[360px] mx-auto min-h-[160px] text-center px-4">
             <TypingText text={message} />
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="glass-card p-8 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
-          <p className="text-xs text-blue-300 opacity-60 mb-3 uppercase tracking-[0.2em] font-medium">나의 의식 점수</p>
-          <p className="text-4xl font-light tracking-tight">
+        <div className="glass-card p-6 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
+          <p className="text-[10px] text-blue-300 opacity-60 mb-2 uppercase tracking-[0.2em] font-medium">나의 의식 점수</p>
+          <p className="text-3xl font-light tracking-tight">
             {totalScore.toLocaleString()}
-            <span className="text-xl ml-0.5 opacity-60 font-normal">점</span>
+            <span className="text-lg ml-0.5 opacity-60 font-normal">점</span>
           </p>
         </div>
-        <div className="glass-card p-8 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
-          <p className="text-xs text-blue-300 opacity-60 mb-3 uppercase tracking-[0.2em] font-medium">현재 레벨</p>
-          <div className="text-center space-y-1">
-            <p className="text-xl font-light leading-tight text-white">{level.title}</p>
-            <p className="text-sm text-blue-400/70 font-medium tracking-wide">{level.rank}</p>
+        <div className="glass-card p-6 rounded-[2.5rem] flex flex-col justify-center items-center shadow-2xl">
+          <p className="text-[10px] text-blue-300 opacity-60 mb-2 uppercase tracking-[0.2em] font-medium">현재 레벨</p>
+          <div className="text-center space-y-0.5">
+            <p className="text-lg font-light leading-tight text-white">{level.title}</p>
+            <p className="text-[11px] text-blue-400/70 font-medium tracking-wide">{level.rank}</p>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         <button
           onClick={() => setShowHistory(true)}
-          className="w-full glass-card py-6 rounded-2xl text-lg font-light border border-white/10 hover:bg-white/10 transition-all"
+          className="w-full glass-card py-5 rounded-2xl text-base font-light border border-white/10 hover:bg-white/10 transition-all"
         >
-          지금까지 기록한 메모보기
+          기록한 메모보기
+        </button>
+
+        <button
+          onClick={() => setShowGuide(true)}
+          className="w-full glass-card py-5 rounded-2xl text-base font-light border border-white/10 hover:bg-white/10 transition-all text-blue-100/90"
+        >
+          현존하세요 가이드
         </button>
         
         <button
           onClick={onExit}
-          className="w-full bg-white/10 py-6 rounded-2xl text-lg font-light border border-white/20 hover:bg-white/20 transition-all shadow-lg"
+          className="w-full bg-white/10 py-5 rounded-2xl text-base font-light border border-white/20 hover:bg-white/20 transition-all shadow-lg"
         >
           앱 종료하기
         </button>
 
         <button
           onClick={() => setShowAnalysis(true)}
-          className="w-full py-4 text-sm font-light text-white/40 hover:text-white/80 transition-all"
+          className="w-full py-3 text-xs font-light text-white/40 hover:text-white/80 transition-all"
         >
           나의 현존의식 분석
         </button>
@@ -175,6 +184,12 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
           emotionStats={emotionStats}
           onClose={() => setShowAnalysis(false)}
           onReset={onReset}
+        />
+      )}
+
+      {showGuide && (
+        <GuideModal
+          onClose={() => setShowGuide(false)}
         />
       )}
 
