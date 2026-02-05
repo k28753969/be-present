@@ -4,6 +4,7 @@ import { Step, MemoRecord } from './types';
 import MemoPage from './components/MemoPage';
 import QuestionPage from './components/QuestionPage';
 import EndingPage from './components/EndingPage';
+import InstallPrompt from './components/InstallPrompt';
 import { EMOTION_SCORES } from './constants';
 
 const REENTRY_LIMIT_MS = 5 * 60 * 1000; // 5분
@@ -90,13 +91,10 @@ const App: React.FC = () => {
       emotion
     };
 
-    // 1. 메모 리스트 업데이트 (LocalStorage 저장)
     const updatedHistory = [newRecord, ...history];
     setHistory(updatedHistory);
     localStorage.setItem('presence_history', JSON.stringify(updatedHistory));
 
-    // 2. 누적 데이터 및 통계 업데이트 (삭제해도 유지될 데이터)
-    // 가중치를 적용한 점수 계산 (반올림 처리)
     const basePoints = EMOTION_SCORES[emotion] || 0;
     const points = Math.round(basePoints * weight);
     const newScore = accumulatedScore + points;
@@ -112,11 +110,9 @@ const App: React.FC = () => {
     localStorage.setItem('presence_emotion_stats', JSON.stringify(newStats));
   };
 
-  // 기록 리스트에서만 삭제 (누적 점수 및 분석 통계에는 영향 없음)
   const deleteFromHistory = (id: string) => {
     setHistory(prevHistory => {
       const updated = prevHistory.filter(item => item.id !== id);
-      // LocalStorage에 즉시 반영하여 새로고침 후에도 유지되도록 함
       localStorage.setItem('presence_history', JSON.stringify(updated));
       return updated;
     });
@@ -207,6 +203,8 @@ const App: React.FC = () => {
           )}
         </div>
       </div>
+
+      <InstallPrompt />
 
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[10%] left-[10%] w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]"></div>
