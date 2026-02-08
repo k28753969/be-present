@@ -71,7 +71,7 @@ const GuideModal: React.FC<Props> = ({ onClose }) => {
           <div 
             className={`transition-all duration-300 transform ${isAnimating ? 'opacity-0 translate-y-4 blur-lg' : 'opacity-100 translate-y-0 blur-0'}`}
           >
-            <h2 className="text-lg md:text-2xl font-light leading-[1.7] text-white/90 break-keep px-4">
+            <h2 className="text-xl md:text-2xl font-light leading-[1.7] text-white/90 break-keep px-4">
               {GUIDE_MESSAGES[step]}
             </h2>
           </div>
