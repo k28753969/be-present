@@ -22,7 +22,7 @@ const MemoPage: React.FC<Props> = ({ onComplete }) => {
           Presence Activated
         </div>
         <h1 className="text-4xl font-light tracking-tight text-white">현존성공</h1>
-        <p className="text-sm font-light text-blue-100/70 leading-relaxed">
+        <p className="text-base font-light text-blue-100/70 leading-relaxed">
           Perfect!! 아주 잘하셨어요.<br />
           당신은 방금 현존의식을 깨우셨습니다.
         </p>
@@ -33,7 +33,7 @@ const MemoPage: React.FC<Props> = ({ onComplete }) => {
           <textarea
             autoFocus
             className="w-full bg-transparent border-none focus:ring-0 text-xl font-light text-white placeholder-white/20 resize-none min-h-[180px] leading-relaxed text-center"
-            placeholder="여기를 클릭해서 지금 방금 알아차린 마음 속 생각을 간단히 적어보세요"
+            placeholder="방금 알아차린 생각을 간단 문장이나 한두개 단어로 적어보세요. "
             value={text}
             onChange={(e) => setText(e.target.value)}
           />

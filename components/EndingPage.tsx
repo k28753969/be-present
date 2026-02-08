@@ -106,7 +106,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
 
   const level = getLevelInfo();
 
-  const message = "지금 여기는 완벽하게 안전합니다.\n아무 일도 벌어지지 않았어요.\n이것만이 유일한 진실입니다.\n잠깐 동안 거짓 망상에 사로잡힌 것임을 깨달으세요.\n 이렇게 깨닫는 단순한 행동만으로도,\n악의 공격으로부터 스스로를 지켜낼 수 있습니다.\n 대군을 거느린 죽음의 신에게 결코 굴복하지 맙시다.";
+  const message = "당신이 있는 그곳은 완벽하게 안전합니다.\n 아무 일도 벌어지지 않았어요.\n 이것만이 유일한 진실입니다.\n 그저 잠시 거짓된 마음에 사로잡혔을 뿐입니다.\n 이 사실을 아는 것만으로도 \n 스스로를 잘 지켜낼 수 있습니다.";
 
   return (
     <div className="fade-in space-y-11 text-center">
@@ -118,7 +118,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
         </div>
         <div className="space-y-3">
           <h2 className="text-2xl font-light text-white">아주 좋습니다</h2>
-          <div className="text-[13px] font-light text-blue-100/70 max-w-[360px] mx-auto min-h-[160px] text-center px-4">
+          <div className="text-sm font-light text-blue-100/70 max-w-[360px] mx-auto min-h-[160px] text-center px-4">
             <TypingText text={message} />
           </div>
         </div>

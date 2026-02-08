@@ -48,7 +48,7 @@ const QuestionPage: React.FC<Props> = ({ onComplete }) => {
             {currentQuestion.text}
           </h2>
           {currentIdx === 1 && (
-            <p className="text-sm font-light text-blue-100/30 pt-1 animate-stagger-slow" style={{ animationDelay: '0.3s' }}>
+            <p className="text-base font-light text-blue-100/30 pt-1 animate-stagger-slow" style={{ animationDelay: '0.3s' }}>
               그 생각의 방향을 알아차려 볼까요?
             </p>
           )}
