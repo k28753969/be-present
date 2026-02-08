@@ -25,10 +25,10 @@ export const QUESTIONS: Question[] = [
     id: 'Q2',
     text: '그 생각으로 인해 느껴지는 감정은 어떤가요?',
     options: [
-      { label: '부끄럽고 챙피함, 비굴하다.', value: '수치심', nextAction: 'end' },
-      { label: '미안함, 내가 잘못했다.', value: '죄의식', nextAction: 'end' },
-      { label: '포기, 어쩔수 없다. 절망스럽다.', value: '무기력', nextAction: 'end' },
-      { label: '슬프다, 눈물이 날 것 같다.', value: '슬픔', nextAction: 'end' },
+      { label: '부끄럽고 챙피함, "비굴하다."', value: '수치심', nextAction: 'end' },
+      { label: '미안함, "내가 잘못했어."', value: '죄의식', nextAction: 'end' },
+      { label: '포기, "어쩔수 없다. 절망적이야."', value: '무기력', nextAction: 'end' },
+      { label: '슬픔, "눈물이 날 것 같아."', value: '슬픔', nextAction: 'end' },
       { label: '해당사항 없음', value: 'none', nextAction: 'next' }
     ]
   },
@@ -36,10 +36,10 @@ export const QUESTIONS: Question[] = [
     id: 'Q3',
     text: '해당하는 것이 없군요. 그럼 다음 중에 있나요?',
     options: [
-      { label: '근심, 걱정된다. 두렵다.', value: '두려움', nextAction: 'end' },
-      { label: '욕망, 갈등, 하고싶어 못 참겠다.', value: '욕망', nextAction: 'end' },
-      { label: '분노, 울화가 치민다.', value: '분노', nextAction: 'end' },
-      { label: '경멸, 무시, 비판, 웃기시네.', value: '자만심', nextAction: 'end' },
+      { label: '근심, "걱정된다. 두렵다."', value: '두려움', nextAction: 'end' },
+      { label: '욕망, "~하고싶어 못 참겠어."', value: '욕망', nextAction: 'end' },
+      { label: '분노, "울화가 치민다."', value: '분노', nextAction: 'end' },
+      { label: '경멸, 무시, 비판, "웃기시네~"', value: '자만심', nextAction: 'end' },
       { label: '해당사항 없음', value: 'none', nextAction: 'next' }
     ]
   },
@@ -47,11 +47,11 @@ export const QUESTIONS: Question[] = [
     id: 'Q4',
     text: '좋습니다. 그럼 혹시 다음 중에 있나요?',
     options: [
-      { label: '화이팅!, 할 수 있다. 용기 내자.', value: '용기', nextAction: 'end' },
-      { label: '이래도 좋고 저래도 좋고 다 좋아~', value: '중용', nextAction: 'end' },
-      { label: '잘 되길 바래. 내가 도와줄께.', value: '자발성', nextAction: 'end' },
-      { label: '이성적인, 자비로운, 감사와 평화로운 마음', value: '포용', nextAction: 'end' },
-      { label: '해당사항 없음', value: 'none', nextAction: 'end' }
+      { label: '"화이팅!, 난 할 수 있다. 용기를 내!"', value: '용기', nextAction: 'end' },
+      { label: '"이래도 좋고 저래도 좋고 다 좋아~"', value: '중용', nextAction: 'end' },
+      { label: '"네가 잘 되길 바래. 내가 도와줄께."', value: '자발성', nextAction: 'end' },
+      { label: '이성적인, 자비로운, 감사와 평화', value: '포용', nextAction: 'end' },
+      { label: '기타', value: 'none', nextAction: 'end' }
     ]
   }
 ];
@@ -65,9 +65,9 @@ export const EMOTION_SCORES: Record<string, number> = {
   '욕망': 16,
   '분노': 15,
   '자만심': 14,
-  '용기': 13,
-  '중용': 12,
-  '자발성': 11,
-  '포용': 10,
-  '상위의식': 10
+  '용기': 12,
+  '중용': 10,
+  '자발성': 8,
+  '포용': 6,
+  '상위의식': 4
 };
