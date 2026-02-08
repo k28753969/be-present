@@ -211,7 +211,7 @@ const App: React.FC = () => {
         <div className="space-y-6">
           <div className="w-1 h-20 bg-gradient-to-b from-blue-500/0 via-blue-500/100 to-blue-500/0 mx-auto animate-pulse"></div>
           <p className="text-xl font-light text-blue-100/80 tracking-widest leading-relaxed">
-            현존의 빛이 <br />당신의 일상에 늘 함께하기를.
+            현존의 빛이 <br />당신의 일상에 늘 함께하기를...
           </p>
         </div>
       </div>

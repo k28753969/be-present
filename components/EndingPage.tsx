@@ -106,7 +106,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
 
   const level = getLevelInfo();
 
-  const message = "당신이 있는 그곳은 완벽하게 안전합니다.\n 아무 일도 벌어지지 않았어요.\n 이것만이 유일한 진실입니다.\n 그저 잠시 거짓된 마음에 사로잡혔을 뿐입니다.\n 이 사실을 아는 것만으로도 \n 스스로를 잘 지켜낼 수 있습니다.";
+  const message = "우리 한번 생각해 볼까요? \n 현재 이곳은 완벽하게 아무일 없죠. 그쵸? \n 맞아요. 아무 일도 벌어지지 않았어요.\n 이것만이 유일한 진실입니다.\n 그저 잠시 거짓된 마음에 사로잡혔을 뿐입니다.\n 이 사실만 알면 스스로를 잘 지켜낼 수 있습니다.";
 
   return (
     <div className="fade-in space-y-11 text-center">
