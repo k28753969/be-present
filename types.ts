@@ -11,6 +11,7 @@ export interface MemoRecord {
   content: string;
   thoughtType: string;
   emotion: string;
+  weight: number; // 통계 분석을 위한 가중치 필드 추가
 }
 
 export interface Question {

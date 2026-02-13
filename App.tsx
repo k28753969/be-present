@@ -6,7 +6,7 @@ import QuestionPage from './components/QuestionPage';
 import EndingPage from './components/EndingPage';
 import { EMOTION_SCORES } from './constants';
 
-const REENTRY_LIMIT_MS = 5 * 60 * 1000; // 5분
+const REENTRY_LIMIT_MS = 100; // 테스트를 위해 단축
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>(Step.MEMO);
@@ -25,13 +25,10 @@ const App: React.FC = () => {
     weight?: number;
   }>({});
 
-  // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
-  // Service Worker Registration and PWA Install Handling
   useEffect(() => {
-    // Register Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').then(registration => {
@@ -42,7 +39,6 @@ const App: React.FC = () => {
       });
     }
 
-    // Capture Install Prompt
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -50,22 +46,17 @@ const App: React.FC = () => {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
     setDeferredPrompt(null);
     setShowInstallBtn(false);
   };
 
-  // 초기 로드 시 데이터 복원 및 제한 체크
   useEffect(() => {
     const lastExit = localStorage.getItem('presence_last_exit');
     if (lastExit) {
@@ -101,7 +92,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // 제한 화면에서의 카운트다운 로직
   useEffect(() => {
     let timer: number;
     if (isRestricted && countdown > 0) {
@@ -127,7 +117,8 @@ const App: React.FC = () => {
       }),
       content: memo,
       thoughtType,
-      emotion
+      emotion,
+      weight // 가중치 저장
     };
 
     const updatedHistory = [newRecord, ...history];
@@ -136,8 +127,8 @@ const App: React.FC = () => {
 
     const basePoints = EMOTION_SCORES[emotion] || 0;
     const points = Math.round(basePoints * weight);
-    const newScore = accumulatedScore + points;
-    const newCount = accumulatedCount + 1;
+    const newScore = accumulatedScore + points; 
+    const newCount = accumulatedCount + 1; 
     const newStats = { ...emotionStats, [emotion]: (emotionStats[emotion] || 0) + 1 };
     
     setAccumulatedScore(newScore);
@@ -219,8 +210,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="animated-bg min-h-screen w-full flex flex-col items-center p-6 text-white relative overflow-y-auto overflow-x-hidden custom-scrollbar">
-      {/* PWA Install Button Overlay */}
+    <div className="animated-bg min-h-screen w-full flex flex-col items-center p-4 text-white relative overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth">
       {showInstallBtn && (
         <button
           onClick={handleInstallClick}
@@ -230,14 +220,10 @@ const App: React.FC = () => {
         </button>
       )}
 
-      <div className="max-w-md w-full z-10 py-12">
-        <div key={currentStep} className="fade-in">
-          {currentStep === Step.MEMO && (
-            <MemoPage onComplete={handleMemoComplete} />
-          )}
-          {currentStep === Step.QUESTIONS && (
-            <QuestionPage onComplete={handleQuestionsComplete} />
-          )}
+      <div className="max-w-md w-full z-10 py-8 flex flex-col min-h-full">
+        <div key={currentStep} className="fade-in flex-1">
+          {currentStep === Step.MEMO && <MemoPage onComplete={handleMemoComplete} />}
+          {currentStep === Step.QUESTIONS && <QuestionPage onComplete={handleQuestionsComplete} />}
           {currentStep === Step.ENDING && (
             <EndingPage 
               history={history} 
@@ -251,16 +237,15 @@ const App: React.FC = () => {
             />
           )}
         </div>
+        <footer className="mt-12 mb-4 text-white/10 text-[9px] tracking-[0.4em] font-light uppercase text-center w-full">
+          Presence Consciousness Activation
+        </footer>
       </div>
 
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
         <div className="absolute top-[10%] left-[10%] w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]"></div>
         <div className="absolute bottom-[10%] right-[10%] w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]"></div>
       </div>
-      
-      <footer className="mt-auto pt-8 pb-4 text-white/20 text-xs tracking-widest font-light uppercase text-center w-full">
-        Presence Consciousness Activation
-      </footer>
     </div>
   );
 };

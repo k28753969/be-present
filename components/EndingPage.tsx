@@ -68,17 +68,12 @@ const TypingText: React.FC<TypingTextProps> = ({ text, speed = 40 }) => {
   return (
     <div className="leading-relaxed inline">
       {displayedText.split('').map((char, index) => {
-        if (char === '\n') {
-          return <br key={index} />;
-        }
+        if (char === '\n') return <br key={index} />;
         return (
           <span
             key={index}
             className="inline-block animate-fade-in-soft"
-            style={{ 
-              animationFillMode: 'both',
-              whiteSpace: 'pre'
-            }}
+            style={{ animationFillMode: 'both', whiteSpace: 'pre' }}
           >
             {char}
           </span>
@@ -89,14 +84,12 @@ const TypingText: React.FC<TypingTextProps> = ({ text, speed = 40 }) => {
   );
 };
 
-// --- 고도화된 시간축 레벨 그래프 (높이 축소) ---
-const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: number; totalScore: number }> = ({ history, currentLevel, totalScore }) => {
+const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: number; totalCount: number }> = ({ history, currentLevel, totalCount }) => {
   const width = 320;
-  const height = 120; // 50% 수준으로 높이 축소
+  const height = 100; 
   const paddingX = 40;
-  const paddingY = 25;
+  const paddingY = 20;
 
-  // 날짜 파싱 헬퍼
   const parseTimestamp = (ts: string) => {
     try {
       const match = ts.match(/(\d+)년\s+(\d+)월\s+(\d+)일\s+(오전|오후)\s+(\d+):(\d+)/);
@@ -108,9 +101,7 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
         return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), hour, parseInt(mm)).getTime();
       }
       return new Date().getTime();
-    } catch (e) {
-      return new Date().getTime();
-    }
+    } catch (e) { return new Date().getTime(); }
   };
 
   const graphData = useMemo(() => {
@@ -124,29 +115,26 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
     const startTimeStr = sortedHistory[0].timestamp.split('일')[0] + '일';
     const endTimeStr = '현재';
 
-    let runningScore = 0;
     const levelBuckets = new Array(31).fill(0);
     const linePoints: { x: number; y: number; lv: number }[] = [];
 
     linePoints.push({ x: paddingX, y: height - paddingY, lv: 0 });
 
+    let runningCount = 0;
     sortedHistory.forEach(record => {
       const score = EMOTION_SCORES[record.emotion] || 0;
       const t = parseTimestamp(record.timestamp);
       const x = paddingX + ((t - startTime) / timeSpan) * (width - paddingX * 2);
       
-      runningScore += score;
-      
+      runningCount += 1;
       let targetLevel = 0;
       for (let i = LEVELS.length - 1; i >= 0; i--) {
-        if (runningScore >= LEVELS[i].threshold) {
+        if (runningCount >= LEVELS[i].threshold) {
           targetLevel = i;
           break;
         }
       }
-
       levelBuckets[targetLevel] += score;
-
       const y = (height - paddingY) - (targetLevel / 30) * (height - paddingY * 2);
       linePoints.push({ x, y, lv: targetLevel });
     });
@@ -170,35 +158,35 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
   const lastPoint = graphData.linePoints[graphData.linePoints.length - 1];
 
   return (
-    <div className="relative w-full py-2 my-1 animate-stagger-slow" style={{ animationDelay: '0.4s' }}>
+    <div className="relative w-full py-1 my-0.5 animate-stagger-slow" style={{ animationDelay: '0.4s' }}>
       <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} fill="none" className="overflow-visible">
         <defs>
-          <filter id="pointGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+          <filter id="pointGlowS" x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
 
-        <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
-        <line x1={paddingX} y1={paddingY} x2={paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
+        <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
+        <line x1={paddingX} y1={paddingY} x2={paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
         
-        <text x={paddingX - 10} y={height / 2} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize="8" transform={`rotate(-90, ${paddingX - 10}, ${height / 2})`}>level</text>
-        <text x={paddingX - 4} y={paddingY + 4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="8" fontWeight="bold">30 max</text>
+        <text x={paddingX - 10} y={height / 2} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="6" transform={`rotate(-90, ${paddingX - 10}, ${height / 2})`}>level</text>
+        <text x={paddingX - 4} y={paddingY + 3} textAnchor="end" fill="rgba(255,255,255,0.3)" fontSize="6" fontWeight="bold">30 max</text>
 
-        <text x={paddingX} y={height - paddingY + 12} textAnchor="start" fill="rgba(255,255,255,0.2)" fontSize="6">{graphData.startTimeStr}</text>
-        <text x={width - paddingX} y={height - paddingY + 12} textAnchor="end" fill="rgba(255,255,255,0.2)" fontSize="6">{graphData.endTimeStr}</text>
+        <text x={paddingX} y={height - paddingY + 10} textAnchor="start" fill="rgba(255,255,255,0.15)" fontSize="5">{graphData.startTimeStr}</text>
+        <text x={width - paddingX} y={height - paddingY + 10} textAnchor="end" fill="rgba(255,255,255,0.15)" fontSize="5">{graphData.endTimeStr}</text>
 
         {graphData.bars.map((bar, i) => (
           <rect
             key={i}
-            x={bar!.x - 3}
+            x={bar!.x - 2}
             y={height - paddingY - bar!.h}
-            width="6"
+            width="4"
             height={bar!.h}
-            fill="rgba(59, 130, 246, 0.1)"
-            stroke="rgba(59, 130, 246, 0.3)"
-            strokeWidth="0.4"
-            rx="1"
+            fill="rgba(59, 130, 246, 0.08)"
+            stroke="rgba(59, 130, 246, 0.2)"
+            strokeWidth="0.3"
+            rx="0.5"
             className="fade-in"
             style={{ animationDelay: `${0.8 + i * 0.05}s` }}
           />
@@ -207,34 +195,24 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
         <path
           d={pathData}
           stroke="#4f46e5"
-          strokeWidth="1.2"
+          strokeWidth="1.0"
           strokeLinecap="round"
           strokeLinejoin="round"
           className="draw-line-anim"
-          style={{ 
-            strokeDasharray: 2000, 
-            strokeDashoffset: 2000,
-            filter: 'drop-shadow(0 0 2px rgba(79, 70, 229, 0.3))'
-          }}
+          style={{ strokeDasharray: 2000, strokeDashoffset: 2000 }}
         />
 
         {lastPoint && (
           <g>
-            <circle cx={lastPoint.x} cy={lastPoint.y} r="0" stroke="white" strokeWidth="0.8" className="concentric-ring-1" />
-            <circle cx={lastPoint.x} cy={lastPoint.y} r="0" stroke="white" strokeWidth="0.8" className="concentric-ring-2" />
-            <circle
-              cx={lastPoint.x}
-              cy={lastPoint.y}
-              r="4"
-              fill="#3b82f6"
-              filter="url(#pointGlow)"
-            />
+            <circle cx={lastPoint.x} cy={lastPoint.y} r="0" stroke="white" strokeWidth="0.6" className="concentric-ring-1" />
+            <circle cx={lastPoint.x} cy={lastPoint.y} r="0" stroke="white" strokeWidth="0.6" className="concentric-ring-2" />
+            <circle cx={lastPoint.x} cy={lastPoint.y} r="3" fill="#3b82f6" filter="url(#pointGlowS)" />
             <text
               x={lastPoint.x}
-              y={lastPoint.y < height / 2 ? lastPoint.y + 16 : lastPoint.y - 10}
+              y={lastPoint.y < height / 2 ? lastPoint.y + 12 : lastPoint.y - 8}
               textAnchor="middle"
               fill="white"
-              fontSize="10"
+              fontSize="8"
               fontWeight="bold"
               className="fade-in"
               style={{ animationDelay: '3s' }}
@@ -244,24 +222,12 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
           </g>
         )}
       </svg>
-      
       <style>{`
-        @keyframes drawLine {
-          to { stroke-dashoffset: 0; }
-        }
-        @keyframes ringGrow {
-          0% { r: 0; opacity: 1; }
-          100% { r: 12; opacity: 0; }
-        }
-        .draw-line-anim {
-          animation: drawLine 4s cubic-bezier(0.2, 0, 0.4, 1) forwards;
-        }
-        .concentric-ring-1 {
-          animation: ringGrow 3s ease-out infinite;
-        }
-        .concentric-ring-2 {
-          animation: ringGrow 3s ease-out infinite 1.5s;
-        }
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+        @keyframes ringGrow { 0% { r: 0; opacity: 1; } 100% { r: 12; opacity: 0; } }
+        .draw-line-anim { animation: drawLine 4s cubic-bezier(0.2, 0, 0.4, 1) forwards; }
+        .concentric-ring-1 { animation: ringGrow 3s ease-out infinite; }
+        .concentric-ring-2 { animation: ringGrow 3s ease-out infinite 1.5s; }
       `}</style>
     </div>
   );
@@ -288,133 +254,95 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
     const fetchInspiration = async () => {
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const prompt = `당신은 에크하르트 톨레와 데이비드 호킨스의 지혜, 그리고 현대 심리학의 마음챙김(trait mindfulness) 이론에 정통한 명상 가이드입니다.
-        사용자가 방금 자신의 생각을 알아차리고 기록했습니다. 이 사용자에게 깊은 통찰과 평온을 줄 수 있는 메시지를 한국어로 작성해주세요.
-        
-        조건:
-        1. 에크하르트 톨레('삶으로 다시 떠오르기'), 데이비드 호킨스('의식혁명'), 마음챙김 관련 명언이나 학술적 통찰을 바탕으로 하여 인터넷에서 영감을 탐색할 것.
-        2. 공백 포함 30자에서 60자 사이의 한 문장 또는 두 문장으로 작성할 것.
-        3. 신비롭고 우아한 어조를 사용할 것.
-        4. 오직 메시지 텍스트만 출력할 것.`;
-
+        const prompt = `당신은 에크하르트 톨레와 데이비드 호킨스의 지혜를 가진 명상 가이드입니다. 
+        사용자가 생각을 알아차리고 기록했습니다. 이 사용자에게 통찰을 줄 수 있는 우아한 한 문장 메시지를 한국어로 작성해주세요.`;
         const response = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: prompt,
-          config: {
-            tools: [{ googleSearch: {} }],
-            temperature: 0.8,
-          },
+          config: { tools: [{ googleSearch: {} }], temperature: 0.8 },
         });
-
-        const text = response.text || "지금 이 순간, 당신의 존재만으로도 이미 충분합니다.";
-        setDynamicMessage(text.trim());
-      } catch (error) {
-        console.error("Failed to generate message:", error);
-        setDynamicMessage("지금 이 순간, 당신의 존재만으로도 이미 충분합니다.");
-      }
+        setDynamicMessage(response.text?.trim() || "지금 이 순간, 당신의 존재만으로도 이미 충분합니다.");
+      } catch (e) { setDynamicMessage("지금 이 순간, 당신의 존재만으로도 이미 충분합니다."); }
     };
-
     fetchInspiration();
   }, []);
 
   const level = useMemo(() => {
-    const score = totalScore;
-    const info = LEVELS.slice().reverse().find(l => score >= l.threshold) || LEVELS[0];
+    const info = LEVELS.slice().reverse().find(l => totalCount >= l.threshold) || LEVELS[0];
     return { ...info, actualLevelNum: parseInt(info.rank.split(' ')[1]) };
-  }, [totalScore]);
+  }, [totalCount]);
 
   const topEmotions = useMemo(() => {
     return Object.entries(emotionStats)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
-      .map(([name, count]) => ({
-        name,
-        count,
-        score: EMOTION_SCORES[name] || 0
-      }));
+      .map(([name, count]) => ({ name, count, score: EMOTION_SCORES[name] || 0 }));
   }, [emotionStats]);
 
   return (
-    <div className="fade-in space-y-6 text-center pb-12 px-1 max-w-sm mx-auto">
-      {/* 상단 메시지 구역 */}
-      <div className="space-y-3 pt-2">
-        <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/10 shadow-inner">
-          <svg className="w-5 h-5 text-blue-200/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="fade-in space-y-4 text-center px-1 max-w-sm mx-auto">
+      <div className="space-y-2 pt-1">
+        <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/10 shadow-inner">
+          <svg className="w-4 h-4 text-blue-200/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <div className="text-sm font-light text-blue-100/60 min-h-[60px] leading-relaxed flex items-center justify-center px-6">
-          <TypingText text={dynamicMessage} speed={50} />
+        <div className="text-[11px] font-light text-blue-100/60 min-h-[50px] leading-relaxed flex items-center justify-center px-4">
+          <TypingText text={dynamicMessage} speed={40} />
         </div>
       </div>
 
-      {/* 메인 분석 카드 */}
-      <div className="glass-card rounded-[2.5rem] p-6 shadow-2xl border-white/10 relative overflow-hidden text-left bg-[#0f172a]/60 backdrop-blur-3xl">
-        <div className="flex justify-between items-start mb-4 gap-2">
-          <div className="bg-[#2a2a68]/80 px-4 py-3 rounded-xl border border-white/5 shadow-2xl flex-1 overflow-hidden">
-            <p className="text-[8px] text-blue-300 uppercase tracking-[0.1em] font-semibold mb-1 opacity-80">Current Presence</p>
-            <h3 className="text-base font-normal text-white tracking-tight mb-0.5 truncate leading-tight">{level.title}</h3>
-            <p className="text-[9px] text-white/30 font-light">Level {level.actualLevelNum}</p>
+      <div className="glass-card rounded-[2rem] p-5 shadow-2xl border-white/10 relative overflow-hidden text-left bg-transparent backdrop-blur-3xl">
+        <div className="flex justify-between items-start mb-2 gap-2">
+          <div className="px-1 py-1 flex-1 overflow-hidden">
+            <p className="text-[7px] text-blue-300/60 uppercase tracking-[0.1em] font-semibold mb-0.5">Current Presence</p>
+            <h3 className="text-[14px] font-normal text-white tracking-tight truncate leading-tight whitespace-nowrap">{level.title}</h3>
+            <p className="text-[8px] text-white/30 font-light">Level {level.actualLevelNum}</p>
           </div>
-          <div className="text-right pt-1 pr-1 shrink-0">
-            <p className="text-[8px] text-white/40 uppercase tracking-[0.1em] mb-0.5">Total Score</p>
-            <p className="text-2xl font-light text-white font-mono tracking-tighter leading-none">{totalScore.toLocaleString()}</p>
+          <div className="text-right pt-0.5 pr-1 shrink-0">
+            <p className="text-[7px] text-white/40 uppercase tracking-[0.1em] mb-0.5">Total Score</p>
+            <p className="text-xl font-light text-white font-mono tracking-tighter leading-none">{totalScore.toLocaleString()}</p>
           </div>
         </div>
 
-        <TemporalPresenceGraph history={history} currentLevel={level.actualLevelNum} totalScore={totalScore} />
+        <TemporalPresenceGraph history={history} currentLevel={level.actualLevelNum} totalCount={totalCount} />
 
-        <div className="mt-4 pt-4 border-t border-white/5">
-          <p className="text-[8px] text-white/30 uppercase tracking-[0.2em] mb-3">Awareness Impact (Top 3)</p>
-          <div className="space-y-3">
+        <div className="mt-2 pt-3 border-t border-white/5">
+          <p className="text-[7px] text-white/30 uppercase tracking-[0.2em] mb-2">Awareness Impact (Top 3)</p>
+          <div className="space-y-2">
             {topEmotions.length > 0 ? topEmotions.map((em, i) => (
-              <div key={i} className="flex items-center justify-between text-xs font-light group">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-1 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.3)] group-hover:bg-blue-400 transition-colors"></div>
-                  <span className="text-white/80 group-hover:text-white transition-colors text-[11px]">{em.name}</span>
+              <div key={i} className="flex items-center justify-between text-[10px] font-light group">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-0.5 h-0.5 rounded-full bg-blue-500/50 shadow-[0_0_6px_rgba(59,130,246,0.3)]"></div>
+                  <span className="text-white/70">{em.name}</span>
                 </div>
-                <div className="flex gap-3 text-[10px] font-mono">
-                  <span className="text-white/30">{em.count}회</span>
-                  <span className="text-blue-400/60">+{em.score}p</span>
+                <div className="flex gap-2 font-mono text-white/40">
+                  <span>{em.count}회</span>
+                  <span className="text-blue-400/40">+{em.score}p</span>
                 </div>
               </div>
-            )) : (
-              <p className="text-[10px] text-white/20 italic">No data analyzed yet.</p>
-            )}
+            )) : <p className="text-[8px] text-white/20 italic">No data analyzed yet.</p>}
           </div>
         </div>
       </div>
 
-      {/* 하단 액션 버튼 구역 */}
-      <div className="flex flex-col gap-3 pt-4">
-        <button
-          onClick={() => setShowHistory(true)}
-          className="w-full glass-card py-5 rounded-[1.5rem] text-sm font-light border border-white/5 hover:bg-white/10 transition-all active:scale-[0.98] shadow-lg"
-        >
+      <div className="flex flex-col gap-2.5 pt-2">
+        <button onClick={() => setShowHistory(true)} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/5 hover:bg-white/10 transition-all active:scale-[0.98]">
           기록한 메모보기
         </button>
-        <button
-          onClick={() => setShowGuide(true)}
-          className="w-full glass-card py-5 rounded-[1.5rem] text-sm font-light border border-white/5 hover:bg-white/10 transition-all text-blue-100/60 active:scale-[0.98] shadow-md"
-        >
+        <button onClick={() => setShowGuide(true)} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/5 hover:bg-white/10 transition-all text-blue-100/60 active:scale-[0.98]">
           현존하세요 가이드
         </button>
-        <button
-          onClick={onExit}
-          className="w-full bg-white/5 py-5 rounded-[1.5rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]"
-        >
+        <button onClick={onExit} className="w-full bg-white/5 py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]">
           앱 종료하기
         </button>
-        <button
-          onClick={() => setShowAnalysis(true)}
-          className="w-full py-4 text-[9px] font-light text-white/20 hover:text-white/40 transition-all tracking-[0.4em] uppercase"
-        >
+        <button onClick={() => setShowAnalysis(true)} className="w-full py-3 text-[8px] font-light text-white/20 hover:text-white/40 transition-all tracking-[0.4em] uppercase">
           Consciousness Analytics
         </button>
       </div>
 
       {showHistory && <HistoryModal history={history} onClose={() => setShowHistory(false)} onDeleteRecord={onDeleteRecord} />}
-      {showAnalysis && <AnalysisModal emotionStats={emotionStats} onClose={() => setShowAnalysis(false)} onReset={onReset} />}
+      {showAnalysis && <AnalysisModal emotionStats={emotionStats} history={history} onClose={() => setShowAnalysis(false)} onReset={onReset} />}
       {showGuide && <GuideModal onClose={() => setShowGuide(false)} />}
     </div>
   );
