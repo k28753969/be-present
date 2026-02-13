@@ -16,7 +16,7 @@ const MemoPage: React.FC<Props> = ({ onComplete }) => {
   };
 
   return (
-    <div className="space-y-12 text-center">
+    <div className="space-y-12 text-center overflow-y-auto py-4">
       <div className="space-y-4">
         <div className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs tracking-[0.2em] text-blue-200 mb-2 uppercase">
           Presence Activated
@@ -39,7 +39,7 @@ const MemoPage: React.FC<Props> = ({ onComplete }) => {
           />
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex justify-center pb-8">
           <button
             type="submit"
             disabled={!text.trim()}

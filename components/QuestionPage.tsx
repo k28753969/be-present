@@ -32,9 +32,9 @@ const QuestionPage: React.FC<Props> = ({ onComplete }) => {
   const progress = ((currentIdx + 1) / QUESTIONS.length) * 100;
 
   return (
-    <div className="space-y-12 text-center max-w-sm mx-auto">
+    <div className="space-y-8 text-center max-w-sm mx-auto overflow-y-auto pb-12">
       {/* Progress & Header Section */}
-      <div className="space-y-8">
+      <div className="space-y-6 pt-2">
         <div className="w-full h-[2px] bg-white/5 rounded-full overflow-hidden">
           <div 
             className="h-full bg-blue-400/40 transition-all duration-1000 ease-in-out"
@@ -44,7 +44,7 @@ const QuestionPage: React.FC<Props> = ({ onComplete }) => {
         
         <div key={`header-${currentIdx}`} className="space-y-3 animate-stagger-slow" style={{ animationDelay: '0.1s' }}>
           <p className="text-[10px] uppercase tracking-[0.5em] text-blue-300/40 font-medium">Step {currentIdx + 1}</p>
-          <h2 className="text-2xl font-light leading-snug text-white/90">
+          <h2 className="text-2xl font-light leading-snug text-white/90 px-4">
             {currentQuestion.text}
           </h2>
           {currentIdx === 1 && (
@@ -56,7 +56,7 @@ const QuestionPage: React.FC<Props> = ({ onComplete }) => {
       </div>
 
       {/* Options Grid with Slower Staggered Animation */}
-      <div key={`options-${currentIdx}`} className="grid grid-cols-1 gap-4">
+      <div key={`options-${currentIdx}`} className="grid grid-cols-1 gap-4 px-2">
         {currentQuestion.options.map((option, idx) => (
           <button
             key={idx}
@@ -77,7 +77,7 @@ const QuestionPage: React.FC<Props> = ({ onComplete }) => {
       {currentIdx > 0 && (
         <button 
           onClick={() => setCurrentIdx(currentIdx - 1)}
-          className="text-white/20 text-xs font-light hover:text-white/40 tracking-widest transition-colors pt-6 animate-stagger-slow uppercase"
+          className="text-white/20 text-xs font-light hover:text-white/40 tracking-widest transition-colors pt-4 animate-stagger-slow uppercase"
           style={{ animationDelay: '1.2s' }}
         >
           Go Back

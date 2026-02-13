@@ -110,9 +110,8 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
     const barCount = currentLevel + 1;
     const barWidth = effectiveWidth / barCount;
     
-    // 1단계: 각 레벨의 점수 합계 먼저 계산하여 최댓값(Scale) 찾기
     const levelData = [];
-    let maxFoundScore = 50; // 최소 기준점
+    let maxFoundScore = 50;
 
     for (let i = 0; i <= currentLevel; i++) {
       const startIdx = LEVELS[i].threshold;
@@ -125,7 +124,6 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
       levelData.push({ scoreSum, startIdx });
     }
 
-    // 2단계: 최댓값에 비례하여 막대 높이 및 포인트 계산
     const bars = [];
     const points = [];
 
@@ -256,7 +254,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const prompt = `당신은 에크하르트 톨레와 데이비드 호킨스의 지혜를 가진 명상 가이드입니다. 
-        사용자가 생각을 알아차리고 기록했습니다. 이 사용자에게 통찰을 줄 수 있는 우아한 한 문장 메시지를 한국어로 작성해주세요.`;
+        사용자는 무익한 생각을 그 순간 알아차리고 기록했습니다. 이 사용자에게 통찰을 줄 수 있는 우아한 한 문장 메시지를 제공해주세요. 문장의 처음은 종종 "현재는 아무 문제가 없습니다. 이것만이 진실입니다. 잡념에 현혹되지 마세요." 라는 문구로 시작해주세요.`;
         const response = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
           contents: prompt,
@@ -281,7 +279,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
   }, [emotionStats]);
 
   return (
-    <div className="fade-in space-y-4 text-center px-1 max-w-sm mx-auto">
+    <div className="fade-in space-y-6 text-center px-1 max-w-sm mx-auto overflow-y-auto pb-12">
       <div className="space-y-2 pt-1">
         <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center mx-auto border border-white/10 shadow-inner">
           <svg className="w-4 h-4 text-blue-200/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -328,17 +326,17 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
       </div>
 
       <div className="flex flex-col gap-2.5 pt-2">
-        <button onClick={() => setShowHistory(true)} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/5 hover:bg-white/10 transition-all active:scale-[0.98]">
+        <button onClick={() => setShowHistory(true)} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98] text-white/80">
           기록한 메모보기
         </button>
-        <button onClick={() => setShowGuide(true)} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/5 hover:bg-white/10 transition-all text-blue-100/60 active:scale-[0.98]">
+        <button onClick={() => setShowGuide(true)} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98] text-white/80">
           현존하세요 가이드
         </button>
-        <button onClick={onExit} className="w-full bg-white/5 py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]">
-          앱 종료하기
+        <button onClick={() => setShowAnalysis(true)} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98] text-white/80">
+          의식 분석 리포트
         </button>
-        <button onClick={() => setShowAnalysis(true)} className="w-full py-3 text-[8px] font-light text-white/20 hover:text-white/40 transition-all tracking-[0.4em] uppercase">
-          Consciousness Analytics
+        <button onClick={onExit} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98] text-white/50">
+          앱 종료하기
         </button>
       </div>
 

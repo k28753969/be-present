@@ -12,6 +12,7 @@ export interface MemoRecord {
   thoughtType: string;
   emotion: string;
   weight: number; // 통계 분석을 위한 가중치 필드 추가
+  isDeleted?: boolean; // 삭제 여부 플래그 추가 (소프트 딜리트)
 }
 
 export interface Question {

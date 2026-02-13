@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { MemoRecord } from '../types';
 
 interface Props {
@@ -11,13 +11,18 @@ interface Props {
 const HistoryModal: React.FC<Props> = ({ history, onClose, onDeleteRecord }) => {
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
 
+  // 삭제되지 않은 기록들만 필터링하여 표시
+  const visibleHistory = useMemo(() => {
+    return history.filter(item => !item.isDeleted);
+  }, [history]);
+
   const handleRecordClick = (id: string) => {
     if (removedIds.has(id)) return;
     
     // 시각적 삭제 상태 추가 (애니메이션 시작)
     setRemovedIds(prev => new Set(prev).add(id));
     
-    // 애니메이션이 어느 정도 진행된 후(약 800ms) 실제 원본 데이터 영구 삭제
+    // 애니메이션이 어느 정도 진행된 후(약 800ms) 소프트 딜리트 처리
     setTimeout(() => {
       onDeleteRecord(id);
     }, 800);
@@ -42,13 +47,13 @@ const HistoryModal: React.FC<Props> = ({ history, onClose, onDeleteRecord }) => 
         </div>
         
         <div className="flex-1 overflow-y-auto p-6 space-y-0 custom-scrollbar">
-          {history.length === 0 ? (
+          {visibleHistory.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-white/20 font-light space-y-2">
               <div className="w-12 h-12 rounded-full border border-white/5 mb-2 opacity-50"></div>
               <p>아직 기록된 순간이 없습니다.</p>
             </div>
           ) : (
-            history.map((item) => (
+            visibleHistory.map((item) => (
               <div 
                 key={item.id}
                 className={`record-item-wrapper transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] ${removedIds.has(item.id) ? 'is-collapsed' : 'mb-6'}`}

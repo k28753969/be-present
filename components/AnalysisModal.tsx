@@ -62,18 +62,25 @@ const PieChart: React.FC<{ data: { label: string; value: number; color: string }
 const AnalysisModal: React.FC<Props> = ({ emotionStats, history, onClose, onReset }) => {
   const [advice, setAdvice] = useState<string>('데이터를 통해 당신의 무의식을 분석하고 있습니다...');
   const [isTyping, setIsTyping] = useState(false);
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
+  // 모든 기록(삭제된 것 포함)을 기반으로 감정 통계 재계산하여 데이터 보존 보장
   const emotionData = useMemo(() => {
-    const allEmotions = Object.keys(EMOTION_SCORES);
-    return allEmotions
+    const counts: Record<string, number> = {};
+    // r.isDeleted 체크 없이 모든 기록을 통계에 합산 (메모 삭제 시에도 점수 유지 조건 만족)
+    history.forEach(r => {
+      counts[r.emotion] = (counts[r.emotion] || 0) + 1;
+    });
+
+    return Object.keys(EMOTION_SCORES)
       .map(emotion => ({
         name: emotion,
-        count: emotionStats[emotion] || 0,
+        count: counts[emotion] || 0,
         score: EMOTION_SCORES[emotion]
       }))
       .filter(item => item.count > 0)
       .sort((a, b) => b.count - a.count);
-  }, [emotionStats]);
+  }, [history]);
 
   const q0Stats = useMemo(() => {
     const counts = { '저조': 0, '보통': 0, '강력': 0 };
@@ -106,7 +113,8 @@ const AnalysisModal: React.FC<Props> = ({ emotionStats, history, onClose, onRese
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const topEmotion = emotionData[0]?.name || "평온";
-        const presentRate = Math.round((q1Stats.find(s => s.label === '현재')?.value || 0) / history.length * 100);
+        const totalEntries = history.length;
+        const presentRate = Math.round((q1Stats.find(s => s.label === '현재')?.value || 0) / totalEntries * 100);
         
         const prompt = `당신은 에크하르트 톨레와 데이비드 호킨스의 지혜를 가진 세계 최고의 의식 코치이자 심리 상담사입니다. 
         다음 사용자의 데이터를 기반으로 전문적인 분석과 조언을 한국어로 작성해주세요.
@@ -114,12 +122,12 @@ const AnalysisModal: React.FC<Props> = ({ emotionStats, history, onClose, onRese
         [사용자 데이터]
         - 가장 빈번한 감정: ${topEmotion}
         - 현재 집중도(Q1 현재 비율): ${presentRate}%
-        - 전체 알아차림 횟수: ${history.length}회
+        - 전체 알아차림 횟수: ${totalEntries}회
         
         [작성 가이드라인]
-        1. 우아하고 품격 있는 전문 상담사의 어조를 유지하세요.
+        1. 우아하고 품격 있는 전문 상담사의 어조로서 사용자 데이터들에 대한 전반적인 상황을 설명하세요.
         2. 특히 '${topEmotion}'과 같은 부정적인 감정을 명확히 알아차린 행위가 왜 의식 성장에 가장 강력한 기폭제인지 강조하세요. (그것을 보았기에 이미 에고의 지배에서 벗어나기 시작했다는 점)
-        3. 사용자가 이 앱을 통해 '현존'의 근육을 키우며 의식의 밝기가 높아지고 있음을 구체적인 분석적 표현(예: Default Mode Network의 안정화, 자각의 예리함 등)을 섞어 칭찬하세요.
+        3. 사용자가 이 앱을 통해 마음챙김 능력이 향상되고 있음을 구체적인 분석적 표현들을 채용하여 칭찬하세요.
         4. 3~5문장 정도로 작성하며, 매번 새로운 통찰을 제공하세요.
         5. 오직 상담 메시지만 출력하세요.`;
 
@@ -137,13 +145,18 @@ const AnalysisModal: React.FC<Props> = ({ emotionStats, history, onClose, onRese
       }
     };
     generateAdvice();
-  }, [history]);
+  }, [history, emotionData, q1Stats]);
 
   const maxCount = Math.max(...emotionData.map(d => d.count), 1);
 
+  const handleFullReset = () => {
+    onReset();
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-2xl fade-in overflow-hidden">
-      <div className="glass-card w-full max-w-lg h-[90vh] rounded-[40px] flex flex-col overflow-hidden shadow-2xl border border-white/10 bg-[#020617]/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-2xl fade-in overflow-y-auto">
+      <div className="glass-card w-full max-w-lg h-[90vh] rounded-[40px] flex flex-col overflow-hidden shadow-2xl border border-white/10 bg-[#020617]/50 my-auto">
         
         {/* Header */}
         <div className="p-6 flex items-center justify-between border-b border-white/5 bg-white/[0.02] shrink-0">
@@ -176,7 +189,7 @@ const AnalysisModal: React.FC<Props> = ({ emotionStats, history, onClose, onRese
               <div className="space-y-4 px-1">
                 <div className="flex justify-between items-end mb-1">
                   <p className="text-[9px] text-white/30 uppercase tracking-[0.4em] font-semibold">Emotion Energy Spectrum</p>
-                  <p className="text-[8px] text-white/10 italic">sorted by frequency</p>
+                  <p className="text-[8px] text-white/10 italic">Preserved data metrics</p>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
                   {emotionData.map((item, idx) => (
@@ -200,7 +213,7 @@ const AnalysisModal: React.FC<Props> = ({ emotionStats, history, onClose, onRese
               </div>
 
               {/* AI Professional Report */}
-              <div className="glass-card p-6 rounded-[2.5rem] border-white/5 bg-indigo-950/20 relative group">
+              <div className="glass-card p-6 rounded-[2.5rem] border-white/5 bg-indigo-950/20 relative group mb-8">
                 <div className="absolute -top-3 left-6 px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-full backdrop-blur-md">
                     <span className="text-[8px] text-indigo-200 uppercase tracking-widest font-bold">Expert Analysis</span>
                 </div>
@@ -227,33 +240,54 @@ const AnalysisModal: React.FC<Props> = ({ emotionStats, history, onClose, onRese
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/5 bg-white/[0.01] shrink-0">
-          <button
-            onClick={onClose}
-            className="w-full bg-white text-slate-900 py-4 rounded-[1.5rem] text-sm font-semibold shadow-2xl hover:bg-blue-50 transition-all active:scale-[0.98]"
-          >
-            대시보드 종료
-          </button>
-          <div className="flex justify-center mt-4">
-              <button 
-                onClick={() => { if(confirm("모든 기록을 초기화하고 다시 시작하시겠습니까?")) onReset(); }} 
-                className="text-[9px] text-white/10 uppercase tracking-widest hover:text-red-400/40 transition-colors"
+        <div className="p-6 border-t border-white/5 bg-white/[0.01] shrink-0 space-y-3">
+          {!isConfirmingReset ? (
+            <>
+              <button
+                onClick={onClose}
+                className="w-full bg-white text-slate-900 py-4 rounded-[1.5rem] text-sm font-semibold shadow-2xl hover:bg-blue-50 transition-all active:scale-[0.98]"
               >
-                Erase All Memories
+                대시보드 종료
               </button>
-          </div>
+              <button
+                onClick={() => setIsConfirmingReset(true)}
+                className="w-full bg-red-500/10 text-red-400/80 border border-red-500/20 py-4 rounded-[1.5rem] text-sm font-light tracking-widest hover:bg-red-500/20 transition-all active:scale-[0.98]"
+              >
+                데이터 완전 초기화
+              </button>
+            </>
+          ) : (
+            <div className="space-y-4 animate-fade-in-soft py-2">
+              <p className="text-xs text-red-400 font-semibold text-center leading-relaxed">
+                정말로 삭제하시겠습니까?<br />
+                <span className="font-light text-red-400/70">모든 점수와 레벨 기록이 영구히 사라집니다.</span>
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleFullReset}
+                  className="flex-1 bg-red-500 text-white py-4 rounded-[1.2rem] text-sm font-bold shadow-lg active:scale-[0.95] transition-all"
+                >
+                  OK
+                </button>
+                <button
+                  onClick={() => setIsConfirmingReset(false)}
+                  className="flex-1 bg-white/10 text-white/60 py-4 rounded-[1.2rem] text-sm font-light active:scale-[0.95] transition-all"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { display: none; }
         @keyframes fadeInSoft {
           from { opacity: 0; transform: translateY(5px); filter: blur(4px); }
           to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
-        .animate-fade-in-soft { animation: fadeInSoft 1s ease-out forwards; }
+        .animate-fade-in-soft { animation: fadeInSoft 0.8s ease-out forwards; }
       `}</style>
     </div>
   );

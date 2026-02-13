@@ -118,7 +118,8 @@ const App: React.FC = () => {
       content: memo,
       thoughtType,
       emotion,
-      weight // 가중치 저장
+      weight,
+      isDeleted: false
     };
 
     const updatedHistory = [newRecord, ...history];
@@ -142,7 +143,9 @@ const App: React.FC = () => {
 
   const deleteFromHistory = (id: string) => {
     setHistory(prevHistory => {
-      const updated = prevHistory.filter(item => item.id !== id);
+      const updated = prevHistory.map(item => 
+        item.id === id ? { ...item, isDeleted: true } : item
+      );
       localStorage.setItem('presence_history', JSON.stringify(updated));
       return updated;
     });
@@ -163,6 +166,21 @@ const App: React.FC = () => {
     setCurrentStep(Step.MEMO);
     setCurrentMemo('');
     setSessionData({});
+    // 스크롤 위치 초기화
+    window.scrollTo(0, 0);
+  };
+
+  const handleResetAllData = () => {
+    localStorage.removeItem('presence_history');
+    localStorage.removeItem('presence_acc_score');
+    localStorage.removeItem('presence_acc_count');
+    localStorage.removeItem('presence_emotion_stats');
+    
+    setHistory([]);
+    setAccumulatedScore(0);
+    setAccumulatedCount(0);
+    setEmotionStats({});
+    handleReset();
   };
 
   const handleExit = () => {
@@ -175,8 +193,8 @@ const App: React.FC = () => {
 
   if (isRestricted) {
     return (
-      <div className="animated-bg min-h-screen w-full flex flex-col items-center justify-center p-6 text-white text-center">
-        <div className="glass-card p-12 rounded-[3rem] space-y-8 max-w-sm border-white/20 shadow-2xl fade-in">
+      <div className="animated-bg min-h-screen w-full flex flex-col items-center justify-center p-6 text-white text-center overflow-y-auto">
+        <div className="glass-card p-12 rounded-[3rem] space-y-8 max-w-sm border-white/20 shadow-2xl fade-in my-8">
           <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto border border-red-500/20">
             <svg className="w-8 h-8 text-red-400/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -198,7 +216,7 @@ const App: React.FC = () => {
 
   if (isExited) {
     return (
-      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-center p-6 z-[100] fade-in">
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-center p-6 z-[100] fade-in overflow-y-auto">
         <div className="space-y-6">
           <div className="w-1 h-20 bg-gradient-to-b from-blue-500/0 via-blue-500/100 to-blue-500/0 mx-auto animate-pulse"></div>
           <p className="text-xl font-light text-blue-100/80 tracking-widest leading-relaxed">
@@ -210,7 +228,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="animated-bg min-h-screen w-full flex flex-col items-center p-4 text-white relative overflow-y-auto overflow-x-hidden custom-scrollbar scroll-smooth">
+    <div className="animated-bg min-h-screen w-full flex flex-col items-center p-4 text-white relative overflow-y-auto overflow-x-hidden scroll-smooth">
       {showInstallBtn && (
         <button
           onClick={handleInstallClick}
@@ -220,14 +238,14 @@ const App: React.FC = () => {
         </button>
       )}
 
-      <div className="max-w-md w-full z-10 py-8 flex flex-col min-h-full">
-        <div key={currentStep} className="fade-in flex-1">
+      <div className="max-w-md w-full z-10 py-4 flex flex-col flex-1">
+        <div key={currentStep} className="fade-in flex-1 flex flex-col">
           {currentStep === Step.MEMO && <MemoPage onComplete={handleMemoComplete} />}
           {currentStep === Step.QUESTIONS && <QuestionPage onComplete={handleQuestionsComplete} />}
           {currentStep === Step.ENDING && (
             <EndingPage 
               history={history} 
-              onReset={handleReset} 
+              onReset={handleResetAllData} 
               onExit={handleExit}
               onDeleteRecord={deleteFromHistory}
               totalScore={accumulatedScore}
@@ -237,12 +255,13 @@ const App: React.FC = () => {
             />
           )}
         </div>
-        <footer className="mt-12 mb-4 text-white/10 text-[9px] tracking-[0.4em] font-light uppercase text-center w-full">
+        <footer className="mt-8 mb-4 text-white/10 text-[9px] tracking-[0.4em] font-light uppercase text-center w-full">
           Presence Consciousness Activation
         </footer>
       </div>
 
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+      {/* Background elements */}
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
         <div className="absolute top-[10%] left-[10%] w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]"></div>
         <div className="absolute bottom-[10%] right-[10%] w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]"></div>
       </div>
