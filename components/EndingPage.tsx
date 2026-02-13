@@ -86,83 +86,80 @@ const TypingText: React.FC<TypingTextProps> = ({ text, speed = 40 }) => {
 
 const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: number; totalCount: number }> = ({ history, currentLevel, totalCount }) => {
   const width = 320;
-  const height = 100; 
-  const paddingX = 40;
-  const paddingY = 20;
-
-  const parseTimestamp = (ts: string) => {
-    try {
-      const match = ts.match(/(\d+)년\s+(\d+)월\s+(\d+)일\s+(오전|오후)\s+(\d+):(\d+)/);
-      if (match) {
-        let [_, y, m, d, ampm, hh, mm] = match;
-        let hour = parseInt(hh);
-        if (ampm === '오후' && hour < 12) hour += 12;
-        if (ampm === '오전' && hour === 12) hour = 0;
-        return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), hour, parseInt(mm)).getTime();
-      }
-      return new Date().getTime();
-    } catch (e) { return new Date().getTime(); }
-  };
+  const height = 200; 
+  const paddingX = 35;
+  const paddingY = 30;
+  const effectiveWidth = width - paddingX * 2;
 
   const graphData = useMemo(() => {
-    if (history.length === 0) return { linePoints: [], bars: [], startTimeStr: '', endTimeStr: '', maxBarVal: 1 };
+    if (history.length === 0) return { linePoints: [], bars: [], maxScore: 0 };
 
-    const sortedHistory = [...history].sort((a, b) => parseTimestamp(a.timestamp) - parseTimestamp(b.timestamp));
-    const startTime = parseTimestamp(sortedHistory[0].timestamp);
-    const endTime = Date.now();
-    const timeSpan = Math.max(endTime - startTime, 1000); 
-
-    const startTimeStr = sortedHistory[0].timestamp.split('일')[0] + '일';
-    const endTimeStr = '현재';
-
-    const levelBuckets = new Array(31).fill(0);
-    const linePoints: { x: number; y: number; lv: number }[] = [];
-
-    linePoints.push({ x: paddingX, y: height - paddingY, lv: 0 });
-
-    let runningCount = 0;
-    sortedHistory.forEach(record => {
-      const score = EMOTION_SCORES[record.emotion] || 0;
-      const t = parseTimestamp(record.timestamp);
-      const x = paddingX + ((t - startTime) / timeSpan) * (width - paddingX * 2);
-      
-      runningCount += 1;
-      let targetLevel = 0;
-      for (let i = LEVELS.length - 1; i >= 0; i--) {
-        if (runningCount >= LEVELS[i].threshold) {
-          targetLevel = i;
-          break;
-        }
-      }
-      levelBuckets[targetLevel] += score;
-      const y = (height - paddingY) - (targetLevel / 30) * (height - paddingY * 2);
-      linePoints.push({ x, y, lv: targetLevel });
+    const sortedHistory = [...history].sort((a, b) => {
+        const parse = (ts: string) => {
+            const match = ts.match(/(\d+)년\s+(\d+)월\s+(\d+)일\s+(오전|오후)\s+(\d+):(\d+)/);
+            if (!match) return 0;
+            let [_, y, m, d, ampm, hh, mm] = match;
+            let hour = parseInt(hh);
+            if (ampm === '오후' && hour < 12) hour += 12;
+            if (ampm === '오전' && hour === 12) hour = 0;
+            return new Date(parseInt(y), parseInt(m)-1, parseInt(d), hour, parseInt(mm)).getTime();
+        };
+        return parse(a.timestamp) - parse(b.timestamp);
     });
 
-    const currentX = width - paddingX;
-    const currentY = (height - paddingY) - (currentLevel / 30) * (height - paddingY * 2);
-    linePoints.push({ x: currentX, y: currentY, lv: currentLevel });
+    const barCount = currentLevel + 1;
+    const barWidth = effectiveWidth / barCount;
+    
+    // 1단계: 각 레벨의 점수 합계 먼저 계산하여 최댓값(Scale) 찾기
+    const levelData = [];
+    let maxFoundScore = 50; // 최소 기준점
 
-    const maxBarVal = Math.max(...levelBuckets, 10);
-    const bars = levelBuckets.map((val, lv) => {
-      if (val === 0) return null;
-      const x = paddingX + (lv / 30) * (width - paddingX * 2);
-      const barH = (val / maxBarVal) * (height - paddingY * 2);
-      return { x, h: barH, val, lv };
-    }).filter(b => b !== null);
+    for (let i = 0; i <= currentLevel; i++) {
+      const startIdx = LEVELS[i].threshold;
+      const endIdx = i < LEVELS.length - 1 ? LEVELS[i+1].threshold : Infinity;
+      
+      const recordsInLevel = sortedHistory.slice(startIdx, Math.min(endIdx, sortedHistory.length));
+      const scoreSum = recordsInLevel.reduce((sum, rec) => sum + (EMOTION_SCORES[rec.emotion] || 0), 0);
+      
+      if (scoreSum > maxFoundScore) maxFoundScore = scoreSum;
+      levelData.push({ scoreSum, startIdx });
+    }
 
-    return { linePoints, bars, startTimeStr, endTimeStr, maxBarVal };
-  }, [history, currentLevel]);
+    // 2단계: 최댓값에 비례하여 막대 높이 및 포인트 계산
+    const bars = [];
+    const points = [];
+
+    for (let i = 0; i <= currentLevel; i++) {
+      const { scoreSum } = levelData[i];
+      const barH = (scoreSum / maxFoundScore) * (height - paddingY * 2);
+      
+      const xStart = paddingX + i * barWidth;
+      const xCenter = xStart + barWidth / 2;
+
+      bars.push({
+        x: xStart,
+        xCenter,
+        width: barWidth * 0.9,
+        h: Math.max(barH, 4),
+        score: scoreSum
+      });
+
+      const y = (height - paddingY) - (i / 30) * (height - paddingY * 2);
+      points.push({ x: xCenter, y });
+    }
+
+    return { bars, linePoints: points };
+  }, [history, currentLevel, totalCount, effectiveWidth, height]);
 
   const pathData = graphData.linePoints.map((p, i) => (i === 0 ? `M ${p.x},${p.y}` : `L ${p.x},${p.y}`)).join(' ');
   const lastPoint = graphData.linePoints[graphData.linePoints.length - 1];
 
   return (
-    <div className="relative w-full py-1 my-0.5 animate-stagger-slow" style={{ animationDelay: '0.4s' }}>
+    <div className="relative w-full py-2 my-1 animate-stagger-slow" style={{ animationDelay: '0.4s' }}>
       <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} fill="none" className="overflow-visible">
         <defs>
-          <filter id="pointGlowS" x="-200%" y="-200%" width="500%" height="500%">
-            <feGaussianBlur stdDeviation="2" result="blur" />
+          <filter id="pointGlowEnd" x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
@@ -170,32 +167,37 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
         <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
         <line x1={paddingX} y1={paddingY} x2={paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
         
-        <text x={paddingX - 10} y={height / 2} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="6" transform={`rotate(-90, ${paddingX - 10}, ${height / 2})`}>level</text>
-        <text x={paddingX - 4} y={paddingY + 3} textAnchor="end" fill="rgba(255,255,255,0.3)" fontSize="6" fontWeight="bold">30 max</text>
-
-        <text x={paddingX} y={height - paddingY + 10} textAnchor="start" fill="rgba(255,255,255,0.15)" fontSize="5">{graphData.startTimeStr}</text>
-        <text x={width - paddingX} y={height - paddingY + 10} textAnchor="end" fill="rgba(255,255,255,0.15)" fontSize="5">{graphData.endTimeStr}</text>
+        <text x={paddingX - 18} y={height / 2} textAnchor="middle" fill="rgba(255,255,255,0.15)" fontSize="7" transform={`rotate(-90, ${paddingX - 18}, ${height / 2})`} className="tracking-[0.3em] uppercase font-light">Presence Progress</text>
 
         {graphData.bars.map((bar, i) => (
-          <rect
-            key={i}
-            x={bar!.x - 2}
-            y={height - paddingY - bar!.h}
-            width="4"
-            height={bar!.h}
-            fill="rgba(59, 130, 246, 0.08)"
-            stroke="rgba(59, 130, 246, 0.2)"
-            strokeWidth="0.3"
-            rx="0.5"
-            className="fade-in"
-            style={{ animationDelay: `${0.8 + i * 0.05}s` }}
-          />
+          <g key={i} className="fade-in" style={{ animationDelay: `${0.6 + i * 0.05}s` }}>
+            <rect
+              x={bar.x + (bar.width * 0.05)}
+              y={height - paddingY - bar.h}
+              width={bar.width * 0.9}
+              height={bar.h}
+              fill="rgba(99, 102, 241, 0.15)"
+              stroke="rgba(129, 140, 248, 0.3)"
+              strokeWidth="0.8"
+              rx="1.5"
+            />
+            <text 
+              x={bar.xCenter} 
+              y={height - paddingY + 12} 
+              textAnchor="middle" 
+              fill="rgba(255,255,255,0.12)" 
+              fontSize="6" 
+              className="font-mono"
+            >
+              L{i}
+            </text>
+          </g>
         ))}
 
         <path
           d={pathData}
-          stroke="#4f46e5"
-          strokeWidth="1.0"
+          stroke="rgba(255,255,255,0.25)"
+          strokeWidth="1"
           strokeLinecap="round"
           strokeLinejoin="round"
           className="draw-line-anim"
@@ -203,19 +205,18 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
         />
 
         {lastPoint && (
-          <g>
+          <g className="fade-in" style={{ animationDelay: '2s' }}>
             <circle cx={lastPoint.x} cy={lastPoint.y} r="0" stroke="white" strokeWidth="0.6" className="concentric-ring-1" />
             <circle cx={lastPoint.x} cy={lastPoint.y} r="0" stroke="white" strokeWidth="0.6" className="concentric-ring-2" />
-            <circle cx={lastPoint.x} cy={lastPoint.y} r="3" fill="#3b82f6" filter="url(#pointGlowS)" />
+            <circle cx={lastPoint.x} cy={lastPoint.y} r="4" fill="#fff" filter="url(#pointGlowEnd)" />
             <text
               x={lastPoint.x}
-              y={lastPoint.y < height / 2 ? lastPoint.y + 12 : lastPoint.y - 8}
+              y={lastPoint.y - 15}
               textAnchor="middle"
               fill="white"
-              fontSize="8"
-              fontWeight="bold"
-              className="fade-in"
-              style={{ animationDelay: '3s' }}
+              fontSize="10"
+              fontWeight="600"
+              className="font-mono drop-shadow-xl"
             >
               LV.{currentLevel}
             </text>
@@ -224,8 +225,8 @@ const TemporalPresenceGraph: React.FC<{ history: MemoRecord[]; currentLevel: num
       </svg>
       <style>{`
         @keyframes drawLine { to { stroke-dashoffset: 0; } }
-        @keyframes ringGrow { 0% { r: 0; opacity: 1; } 100% { r: 12; opacity: 0; } }
-        .draw-line-anim { animation: drawLine 4s cubic-bezier(0.2, 0, 0.4, 1) forwards; }
+        @keyframes ringGrow { 0% { r: 0; opacity: 1; } 100% { r: 18; opacity: 0; } }
+        .draw-line-anim { animation: drawLine 3.5s cubic-bezier(0.2, 0, 0.4, 1) forwards; }
         .concentric-ring-1 { animation: ringGrow 3s ease-out infinite; }
         .concentric-ring-2 { animation: ringGrow 3s ease-out infinite 1.5s; }
       `}</style>
@@ -292,7 +293,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
         </div>
       </div>
 
-      <div className="glass-card rounded-[2rem] p-5 shadow-2xl border-white/10 relative overflow-hidden text-left bg-transparent backdrop-blur-3xl">
+      <div className="glass-card rounded-[2.5rem] p-5 shadow-2xl border-white/10 relative overflow-hidden text-left bg-transparent backdrop-blur-3xl">
         <div className="flex justify-between items-start mb-2 gap-2">
           <div className="px-1 py-1 flex-1 overflow-hidden">
             <p className="text-[7px] text-blue-300/60 uppercase tracking-[0.1em] font-semibold mb-0.5">Current Presence</p>

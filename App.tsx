@@ -6,7 +6,7 @@ import QuestionPage from './components/QuestionPage';
 import EndingPage from './components/EndingPage';
 import { EMOTION_SCORES } from './constants';
 
-const REENTRY_LIMIT_MS = 100; // 테스트를 위해 단축
+const REENTRY_LIMIT_MS = 5 * 60 * 1000; // 5분
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>(Step.MEMO);
