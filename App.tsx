@@ -219,7 +219,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="animated-bg min-h-screen w-full flex flex-col items-center justify-center p-6 text-white overflow-hidden relative">
+    <div className="animated-bg min-h-screen w-full flex flex-col items-center p-6 text-white relative overflow-y-auto overflow-x-hidden custom-scrollbar">
       {/* PWA Install Button Overlay */}
       {showInstallBtn && (
         <button
@@ -258,7 +258,7 @@ const App: React.FC = () => {
         <div className="absolute bottom-[10%] right-[10%] w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]"></div>
       </div>
       
-      <footer className="absolute bottom-8 text-white/20 text-xs tracking-widest font-light uppercase">
+      <footer className="mt-auto pt-8 pb-4 text-white/20 text-xs tracking-widest font-light uppercase text-center w-full">
         Presence Consciousness Activation
       </footer>
     </div>
