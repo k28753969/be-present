@@ -335,7 +335,7 @@ const EndingPage: React.FC<Props> = ({ history, onReset, onExit, onDeleteRecord,
         <button onClick={() => setShowAnalysis(true)} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98] text-white/80">
           의식 분석 리포트
         </button>
-        <button onClick={onExit} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98] text-white/50">
+        <button onClick={onExit} className="w-full glass-card py-4 rounded-[1.2rem] text-sm font-light border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98] text-white/80">
           앱 종료하기
         </button>
       </div>

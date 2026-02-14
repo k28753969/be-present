@@ -1,93 +1,120 @@
 
 import React, { useState, useEffect } from 'react';
-import { Step, MemoRecord } from './types';
+import { Step, BeforeInstallPromptEvent } from './types';
 import MemoPage from './components/MemoPage';
 import QuestionPage from './components/QuestionPage';
 import EndingPage from './components/EndingPage';
-import { EMOTION_SCORES } from './constants';
+import IntroPage from './components/IntroPage';
+import { usePresence } from './hooks/usePresence';
+import { STORAGE_KEYS } from './services/presenceService';
 
 const REENTRY_LIMIT_MS = 5 * 60 * 1000; // 5분
 
 const App: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<Step>(Step.MEMO);
-  const [currentMemo, setCurrentMemo] = useState<string>('');
-  const [history, setHistory] = useState<MemoRecord[]>([]);
-  const [accumulatedScore, setAccumulatedScore] = useState<number>(0);
-  const [accumulatedCount, setAccumulatedCount] = useState<number>(0);
-  const [emotionStats, setEmotionStats] = useState<Record<string, number>>({});
-  
+  const {
+    currentStep,
+    setCurrentStep,
+    history,
+    accumulatedScore,
+    accumulatedCount,
+    emotionStats,
+    sessionData,
+    handleMemoComplete,
+    handleQuestionsComplete,
+    deleteFromHistory,
+    resetAllData,
+    resetSession
+  } = usePresence();
+
   const [isExited, setIsExited] = useState(false);
   const [isRestricted, setIsRestricted] = useState(false);
   const [countdown, setCountdown] = useState(3);
-  const [sessionData, setSessionData] = useState<{
-    thoughtType?: string;
-    emotion?: string;
-    weight?: number;
-  }>({});
+  
+  // PWA 및 iOS 설치 관련 상태
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showIosInstallGuide, setShowIosInstallGuide] = useState(false);
 
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBtn, setShowInstallBtn] = useState(false);
-
+  // 인트로 자동 전환
   useEffect(() => {
+    if (currentStep === Step.INTRO) {
+      const timer = setTimeout(() => {
+        setCurrentStep(Step.MEMO);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, setCurrentStep]);
+
+  // PWA 설치 및 Service Worker 등록 로직
+  useEffect(() => {
+    // 독립형 모드 및 기기 환경 체크
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                      || (window.navigator as any).standalone 
+                      || document.referrer.includes('android-app://');
+    
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
-        });
+        // public 폴더의 sw.js는 루트 /sw.js로 서빙됨을 가정합니다.
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch((err) => {
+            console.error('ServiceWorker registration failed: ', err);
+          });
       });
     }
 
+    // Android/Chrome용 beforeinstallprompt
     const handleBeforeInstallPrompt = (e: Event) => {
+      if (isStandalone) return;
       e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallBtn(true);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setTimeout(() => setShowInstallBanner(true), 3000);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // iOS Safari 사용자 안내 (Standalone이 아닐 때만)
+    if (isIos && isSafari && !isStandalone) {
+      setTimeout(() => setShowIosInstallGuide(true), 4000);
+    }
+
+    // 설치 완료 이벤트 감지
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-    deferredPrompt.prompt();
+    setShowInstallBanner(false);
+    await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response: ${outcome}`);
     setDeferredPrompt(null);
-    setShowInstallBtn(false);
   };
 
+  const closeInstallBanner = () => setShowInstallBanner(false);
+  const closeIosGuide = () => setShowIosInstallGuide(false);
+
+  // 재진입 제한 로직
   useEffect(() => {
-    const lastExit = localStorage.getItem('presence_last_exit');
+    const lastExit = localStorage.getItem(STORAGE_KEYS.LAST_EXIT);
     if (lastExit) {
       const lastExitTime = parseInt(lastExit, 10);
       const now = Date.now();
       if (now - lastExitTime < REENTRY_LIMIT_MS) {
         setIsRestricted(true);
-      }
-    }
-
-    const savedHistory = localStorage.getItem('presence_history');
-    if (savedHistory) {
-      try {
-        setHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error("Failed to load history", e);
-      }
-    }
-
-    const savedScore = localStorage.getItem('presence_acc_score');
-    if (savedScore) setAccumulatedScore(parseInt(savedScore, 10));
-
-    const savedCount = localStorage.getItem('presence_acc_count');
-    if (savedCount) setAccumulatedCount(parseInt(savedCount, 10));
-
-    const savedStats = localStorage.getItem('presence_emotion_stats');
-    if (savedStats) {
-      try {
-        setEmotionStats(JSON.parse(savedStats));
-      } catch (e) {
-        console.error("Failed to load stats", e);
       }
     }
   }, []);
@@ -105,86 +132,8 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, [isRestricted, countdown]);
 
-  const saveToHistory = (memo: string, thoughtType: string, emotion: string, weight: number = 1.0) => {
-    const newRecord: MemoRecord = {
-      id: crypto.randomUUID(),
-      timestamp: new Date().toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
-      content: memo,
-      thoughtType,
-      emotion,
-      weight,
-      isDeleted: false
-    };
-
-    const updatedHistory = [newRecord, ...history];
-    setHistory(updatedHistory);
-    localStorage.setItem('presence_history', JSON.stringify(updatedHistory));
-
-    const basePoints = EMOTION_SCORES[emotion] || 0;
-    const points = Math.round(basePoints * weight);
-    const newScore = accumulatedScore + points; 
-    const newCount = accumulatedCount + 1; 
-    const newStats = { ...emotionStats, [emotion]: (emotionStats[emotion] || 0) + 1 };
-    
-    setAccumulatedScore(newScore);
-    setAccumulatedCount(newCount);
-    setEmotionStats(newStats);
-    
-    localStorage.setItem('presence_acc_score', newScore.toString());
-    localStorage.setItem('presence_acc_count', newCount.toString());
-    localStorage.setItem('presence_emotion_stats', JSON.stringify(newStats));
-  };
-
-  const deleteFromHistory = (id: string) => {
-    setHistory(prevHistory => {
-      const updated = prevHistory.map(item => 
-        item.id === id ? { ...item, isDeleted: true } : item
-      );
-      localStorage.setItem('presence_history', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  const handleMemoComplete = (text: string) => {
-    setCurrentMemo(text);
-    setCurrentStep(Step.QUESTIONS);
-  };
-
-  const handleQuestionsComplete = (thoughtType: string, emotion: string, weight: number) => {
-    setSessionData({ thoughtType, emotion, weight });
-    saveToHistory(currentMemo, thoughtType, emotion, weight);
-    setCurrentStep(Step.ENDING);
-  };
-
-  const handleReset = () => {
-    setCurrentStep(Step.MEMO);
-    setCurrentMemo('');
-    setSessionData({});
-    // 스크롤 위치 초기화
-    window.scrollTo(0, 0);
-  };
-
-  const handleResetAllData = () => {
-    localStorage.removeItem('presence_history');
-    localStorage.removeItem('presence_acc_score');
-    localStorage.removeItem('presence_acc_count');
-    localStorage.removeItem('presence_emotion_stats');
-    
-    setHistory([]);
-    setAccumulatedScore(0);
-    setAccumulatedCount(0);
-    setEmotionStats({});
-    handleReset();
-  };
-
   const handleExit = () => {
-    localStorage.setItem('presence_last_exit', Date.now().toString());
+    localStorage.setItem(STORAGE_KEYS.LAST_EXIT, Date.now().toString());
     setIsExited(true);
     setTimeout(() => {
       window.close();
@@ -229,23 +178,62 @@ const App: React.FC = () => {
 
   return (
     <div className="animated-bg min-h-screen w-full flex flex-col items-center p-4 text-white relative overflow-y-auto overflow-x-hidden scroll-smooth">
-      {showInstallBtn && (
-        <button
-          onClick={handleInstallClick}
-          className="absolute top-8 right-8 z-50 px-4 py-2 bg-white/10 border border-white/20 backdrop-blur-md rounded-full text-xs font-light tracking-widest text-white/80 hover:bg-white/20 transition-all active:scale-95 shadow-lg"
-        >
-          Install App
-        </button>
+      
+      {/* PWA Floating Install Banner (Android/Chrome) */}
+      {showInstallBanner && (
+        <div className="fixed bottom-8 left-4 right-4 z-[100] animate-stagger-slow">
+          <div className="glass-card p-5 rounded-[2rem] border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shrink-0">
+                <span className="text-white font-bold text-xs">現</span>
+              </div>
+              <div className="overflow-hidden">
+                <h4 className="text-sm font-semibold text-white truncate">현존하세요 설치</h4>
+                <p className="text-[10px] text-white/50 truncate">더 빠르고 편리하게 현존을 경험하세요</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={closeInstallBanner} className="px-3 py-2 text-[10px] font-light text-white/30">닫기</button>
+              <button onClick={handleInstallClick} className="bg-white text-slate-900 px-5 py-2.5 rounded-full text-xs font-semibold shadow-lg active:scale-95 transition-all">설치</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* iOS Safari Install Guide Overlay */}
+      {showIosInstallGuide && (
+        <div className="fixed bottom-8 left-4 right-4 z-[100] animate-stagger-slow">
+          <div className="glass-card p-6 rounded-[2.5rem] border-white/20 shadow-2xl relative">
+            <button onClick={closeIosGuide} className="absolute top-4 right-4 text-white/20">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" strokeWidth={2}/></svg>
+            </button>
+            <div className="space-y-4 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center mx-auto mb-2 border border-indigo-500/30">
+                <svg className="w-6 h-6 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              </div>
+              <p className="text-sm font-light text-blue-50 leading-relaxed">
+                Safari 하단의 <span className="font-semibold text-white">공유 버튼</span>을 누른 후<br />
+                <span className="font-semibold text-white">[홈 화면에 추가]</span>를 눌러주세요.
+              </p>
+              <div className="pt-2">
+                <div className="w-1 h-4 bg-gradient-to-b from-indigo-500/50 to-transparent mx-auto animate-bounce"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="max-w-md w-full z-10 py-4 flex flex-col flex-1">
         <div key={currentStep} className="fade-in flex-1 flex flex-col">
+          {currentStep === Step.INTRO && <IntroPage />}
           {currentStep === Step.MEMO && <MemoPage onComplete={handleMemoComplete} />}
           {currentStep === Step.QUESTIONS && <QuestionPage onComplete={handleQuestionsComplete} />}
           {currentStep === Step.ENDING && (
             <EndingPage 
               history={history} 
-              onReset={handleResetAllData} 
+              onReset={resetAllData} 
               onExit={handleExit}
               onDeleteRecord={deleteFromHistory}
               totalScore={accumulatedScore}
@@ -255,12 +243,13 @@ const App: React.FC = () => {
             />
           )}
         </div>
-        <footer className="mt-8 mb-4 text-white/10 text-[9px] tracking-[0.4em] font-light uppercase text-center w-full">
-          Presence Consciousness Activation
-        </footer>
+        {currentStep !== Step.INTRO && (
+          <footer className="mt-8 mb-4 text-white/10 text-[9px] tracking-[0.4em] font-light uppercase text-center w-full">
+            Presence Consciousness Activation
+          </footer>
+        )}
       </div>
 
-      {/* Background elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
         <div className="absolute top-[10%] left-[10%] w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]"></div>
         <div className="absolute bottom-[10%] right-[10%] w-80 h-80 bg-blue-500/10 rounded-full blur-[100px]"></div>

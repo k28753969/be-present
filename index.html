@@ -6,17 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>현존하세요</title>
     
-    <!-- 모바일 웹앱 설정: 독립 앱처럼 실행 -->
+    <!-- PWA 기본 설정 (Public 폴더 참조) -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="사용자의 현존 의식을 활성화하고 현재의 감정을 돌아보게 돕는 우아한 명상형 메모 앱입니다.">
+
+    <!-- iOS (iPhone/iPad) 전용 메타 태그 및 웹앱 설정 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="현존하세요">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#1E293B">
+    <link rel="apple-touch-icon" href="/favicon.png">
     
-    <!-- PWA Manifest & Icon -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="favicon.png">
-    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- 파비콘 및 아이콘 -->
+    <link rel="icon" type="image/png" href="/favicon.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;600&display=swap" rel="stylesheet">
@@ -33,7 +35,6 @@
             margin: 0;
             padding: 0;
             background: #020617;
-            /* 스크롤 허용 및 터치 경험 개선 */
             overflow-x: hidden;
             overflow-y: auto;
             overscroll-behavior-y: contain;
@@ -49,9 +50,9 @@
         }
         
         .animated-bg {
-            background: linear-gradient(-45deg, #020617, #0f172a, #1e1b4b, #312e81, #1e293b, #020617);
+            background: linear-gradient(-45deg, #000000, #0f172a, #312e81, #6366f1, #1e293b, #000000);
             background-size: 400% 400%;
-            animation: gradientMove 12s ease-in-out infinite;
+            animation: gradientMove 6s ease-in-out infinite;
             padding-top: var(--sat);
             padding-bottom: var(--sab);
             padding-left: var(--sal);
@@ -118,7 +119,22 @@
           animation: fadeInSoft 0.8s ease-out forwards;
         }
 
-        /* 스크롤바 커스터마이징 (필요한 경우에만 표시) */
+        @keyframes pulse-orb {
+          0%, 100% { transform: scale(1); opacity: 0.5; filter: blur(40px); }
+          50% { transform: scale(1.1); opacity: 0.8; filter: blur(60px); }
+        }
+        .animate-pulse-orb {
+          animation: pulse-orb 3s ease-in-out infinite;
+        }
+
+        @keyframes tracking-expand {
+          from { letter-spacing: -0.1em; opacity: 0; filter: blur(10px); }
+          to { letter-spacing: 0.5em; opacity: 1; filter: blur(0); }
+        }
+        .animate-tracking-expand {
+          animation: tracking-expand 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
         ::-webkit-scrollbar {
           width: 0px;
         }

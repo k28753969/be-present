@@ -39,17 +39,14 @@ self.addEventListener('activate', (event) => {
 
 // Fetch 단계: Cache-First 전략 적용
 self.addEventListener('fetch', (event) => {
-  // 외부 API 호출(Gemini 등)은 캐싱에서 제외
   if (event.request.url.includes('generativelanguage.googleapis.com')) {
     return;
   }
 
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // 캐시에 있으면 캐시 반환, 없으면 네트워크 요청
       return response || fetch(event.request).then((fetchResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
-          // 성공적인 GET 요청만 동적으로 캐시에 추가
           if (event.request.method === 'GET' && fetchResponse.status === 200) {
             cache.put(event.request, fetchResponse.clone());
           }
@@ -57,7 +54,6 @@ self.addEventListener('fetch', (event) => {
         });
       });
     }).catch(() => {
-      // 오프라인 상태에서 요청 실패 시 기본 index.html 반환 시도
       if (event.request.mode === 'navigate') {
         return caches.match('/index.html');
       }
