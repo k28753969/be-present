@@ -57,7 +57,7 @@ const App: React.FC = () => {
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // public 폴더의 sw.js는 루트 /sw.js로 서빙됨을 가정합니다.
+        // public/sw.js는 루트 /sw.js로 서빙됨
         navigator.serviceWorker.register('/sw.js')
           .then((registration) => {
             console.log('ServiceWorker registration successful with scope: ', registration.scope);
