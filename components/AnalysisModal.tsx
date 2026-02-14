@@ -224,7 +224,7 @@ const AnalysisModal: React.FC<Props> = ({ emotionStats, history, onClose, onRese
                       {[1,2,3].map(i => <div key={i} className="w-1.5 h-1.5 bg-indigo-400/40 rounded-full animate-bounce" style={{ animationDelay: `${i*0.2}s` }}></div>)}
                     </div>
                   ) : (
-                    <p className="text-[13px] font-light leading-[1.7] text-blue-50/80 break-keep animate-fade-in-soft">
+                    <p className="text-[11px] font-light leading-[1.7] text-blue-50/80 break-keep animate-fade-in-soft">
                       {advice}
                     </p>
                   )}
